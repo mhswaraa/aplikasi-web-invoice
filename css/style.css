@@ -24,6 +24,13 @@
     background: none;
     border: none;
   }
+
+  /* --------------------------------------
+   Sembunyikan header di halaman Login
+-------------------------------------- */
+body.no-header .site-header {
+  display: none;
+}
   
   /* --------------------------------------
      CONTAINER UTAMA
@@ -54,6 +61,32 @@
   .logo {
     height: 40px;
   }
+
+  .bank-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .bank-info-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    margin: 0.8rem 0;
+  }
+  
+  .bank-logo {
+    width: 90px; /* Sedikit lebih besar */
+    height: auto;
+    margin-bottom: 0.1rem;
+  }
+  
+  .bank-details {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
   .nav-links {
     display: flex;
     gap: 1rem;
@@ -541,3 +574,39 @@
     font-weight: 600;
     color: #2a9d8f;
   }
+
+  /* --------------------------------------
+   CUSTOM ALERT / TOAST
+-------------------------------------- */
+.alert-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10000;
+}
+
+.toast {
+  min-width: 200px;
+  padding: 0.8rem 1rem;
+  color: #fff;
+  border-radius: 4px;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-size: 0.95rem;
+}
+
+/* Tipe toast */
+.toast--success { background: #2a9d8f; }
+.toast--error   { background: #e63946; }
+.toast--info    { background: #457b9d; }
+
+/* Saat muncul */
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}

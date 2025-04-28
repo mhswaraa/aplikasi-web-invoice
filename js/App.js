@@ -1,13 +1,15 @@
-import { AuthService } from './auth/AuthService.js';
-import { LoginView } from './auth/LoginView.js';
-import { InvoiceFormView } from './views/InvoiceFormView.js';
+// /js/App.js
+
+import { AuthService }       from './auth/AuthService.js';
+import { LoginView }         from './auth/LoginView.js';
+import { InvoiceFormView }   from './views/InvoiceFormView.js';
+import { InvoiceListView }   from './views/InvoiceListView.js';
 import { InvoiceDetailView } from './views/InvoiceDetailView.js';
-import { InvoiceListView }        from './views/InvoiceListView.js';    
-import { PDFService } from './services/PDFService.js';
-// ... import view lainnya
+import { AlertService } from './services/AlertService.js';
+import { PDFService }        from './services/PDFService.js';
 
 function bootstrap() {
-  // Inisialisasi default users (pindahkan dari utils.js jika perlu)
+  // 1) Inisialisasi default user
   if (!localStorage.getItem('users')) {
     const defaultUsers = [
       { id: 'user_1', username: 'admin', password: 'password123' }
@@ -15,41 +17,64 @@ function bootstrap() {
     localStorage.setItem('users', JSON.stringify(defaultUsers));
   }
 
-  // Routing dasar
-  const route = location.hash.split('/')[0] || '#login';
+  // 2) Tentukan route dari location.hash
+  const hash  = location.hash || '#login';
+  const route = hash.split('/')[0];
+
+  // 3) Proteksi route selain login
   if (route !== '#login' && !AuthService.isAuthenticated()) {
     location.hash = '#login';
     return LoginView.render();
   }
 
+  // 4) Tambahkan class no-header pada body jika di halaman login
+  if (route === '#login') {
+    document.body.classList.add('no-header');
+  } else {
+    document.body.classList.remove('no-header');
+  }
+
+  // 5) Routing ke view yang sesuai
   switch (route) {
     case '#login':
-      return LoginView.render();
+      LoginView.render();
+      break;
     case '#invoice-form':
-      return InvoiceFormView.render();
-    case '#invoice-list':                  // ← route baru
-      return InvoiceListView.render();
+      InvoiceFormView.render();
+      break;
+    case '#invoice-list':
+      InvoiceListView.render();
+      break;
     case '#invoice-detail':
-      return InvoiceDetailView.render();
+      InvoiceDetailView.render();
+      break;
     default:
-      return InvoiceFormView.render();
+      LoginView.render();
   }
 }
 
-window.addEventListener('DOMContentLoaded', bootstrap);
-window.addEventListener('hashchange', bootstrap);
+// 6) Pasang bootstrap saat DOM siap dan saat hash berubah
+window.addEventListener('DOMContentLoaded', () => {
+  bootstrap();
 
-// Toggle nav-links on mobile
-const toggle = document.querySelector('.nav-toggle');
-const nav    = document.querySelector('.nav-links');
-toggle.addEventListener('click', () => {
-  nav.classList.toggle('show');
+  // Toggle nav-links on mobile
+  const toggle = document.querySelector('.nav-toggle');
+  const nav    = document.querySelector('.nav-links');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      nav.classList.toggle('show');
+    });
+  }
+
+  // Logout button
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      AuthService.logout();
+      location.hash = '#login';
+    });
+  }
 });
 
-// Logout button
-document.getElementById('logout-btn')
-  .addEventListener('click', e => {
-    e.preventDefault();
-    AuthService.logout();
-    location.hash = '#login';
-  });
+window.addEventListener('hashchange', bootstrap);

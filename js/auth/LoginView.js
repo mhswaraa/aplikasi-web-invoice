@@ -41,12 +41,12 @@ export const LoginView = {
       try {
         await AuthService.login(username, password);
         // Tampilkan alert sukses
-        alert('Berhasil login!');
+        AlertService.show('Berhasil login!', 'success');
         // Redirect ke halaman form invoice
         location.hash = '#invoice-form';
       } catch (err) {
         // Gagal login: tampilkan pesan
-        errMsg.textContent = err.message;
+        AlertService.show(err.message, 'error');
         errMsg.style.display = 'block';
       }
     });
