@@ -23,14 +23,15 @@ export const InvoiceDetailView = {
 
     // Build items HTML
     const itemsHTML = items.map((item,i) => `
-      <tr>
-        <td>${i+1}</td>
-        <td>${item.name}</td>
-        <td>${item.size}</td>
-        <td class="text-right">${item.qty}</td>
-        <td class="text-right">${(item.qty*(item.price||0)).toLocaleString()}</td>
-      </tr>
-    `).join('');
+  <tr>
+    <td>${i+1}</td>
+    <td>${item.name}</td>
+    <td>${item.size}</td>
+    <td class="text-right">${(item.price || 0).toLocaleString()}</td>
+    <td class="text-right">${item.qty}</td>
+    <td class="text-right">${(item.qty*(item.price || 0)).toLocaleString()}</td>
+  </tr>
+`).join('');
 
     // Recalculate summary
     const subtotal        = items.reduce((s,it)=> s + (it.qty*(it.price||0)), 0);
@@ -64,19 +65,20 @@ export const InvoiceDetailView = {
 
         <!-- ITEMS TABLE -->
         <table class="pdf-table">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Description</th>
-              <th>Size</th>
-              <th class="text-right">QTY</th>
-              <th class="text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHTML}
-          </tbody>
-        </table>
+  <thead>
+    <tr>
+      <th>No</th>
+      <th>Description</th>
+      <th>Size</th>
+      <th>Price</th>
+      <th>QTY</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${itemsHTML}
+  </tbody>
+</table>
 
         <!-- SUMMARY -->
         <div class="pdf-summary">
@@ -107,7 +109,6 @@ export const InvoiceDetailView = {
             <br>
             <br>
             <strong>Terms And Conditions</strong>
-            <p>Lorem ipsum dolor sit amet.</p>
           </div>
           <div class="signature">
           <br>
