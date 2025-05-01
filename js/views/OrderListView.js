@@ -1,0 +1,97 @@
+// /js/views/OrderListView.js
+
+import { OrderService } from '../services/OrderService.js';
+
+export const OrderListView = {
+  render() {
+    const app    = document.getElementById('app');
+    const orders = OrderService.getAllOrders();
+
+    const rows = orders.map((o, i) => {
+      // Hitung total qty dari semua items
+      const totalQty = Array.isArray(o.items)
+        ? o.items.reduce((sum, it) => sum + (Number(it.qtyFabric) || 0), 0)
+        : 0;
+
+      return `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${o.orderCode}</td>
+          <td>${o.clientName}</td>
+          <td>${o.package}</td>
+          <td>${o.model}</td>
+          <td>${totalQty}</td>
+          <td>${o.status}</td>
+          <td>
+            <button class="btn detail-order" data-id="${o.id}">Detail</button>
+            <button class="btn view-order"   data-id="${o.id}">Edit</button>
+            <button class="btn delete-order" data-id="${o.id}">Hapus</button>
+            
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    app.innerHTML = `
+      <div class="order-list-container">
+        <h2>Order Masuk</h2>
+        <button id="add-order" class="btn">Tambah Order</button>
+        <table class="item-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Kode</th>
+              <th>Klien</th>
+              <th>Paket</th>
+              <th>Model</th>
+              <th>Total Qty Kain</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || `
+              <tr>
+                <td colspan="8" style="text-align:center">
+                  Belum ada order.
+                </td>
+              </tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+    this.afterRender();
+  },
+
+  afterRender() {
+    // Tombol “Tambah Order”
+    document.getElementById('add-order')
+      .addEventListener('click', () => location.hash = '#order-form');
+
+    // Tombol “Detail”
+    document.querySelectorAll('.detail-order').forEach(btn =>
+      btn.addEventListener('click', e => {
+        const id = e.currentTarget.dataset.id;
+        location.hash = `#order-detail/${id}`;
+      })
+    );
+
+    // Tombol “Edit”
+    document.querySelectorAll('.view-order').forEach(btn =>
+      btn.addEventListener('click', e => {
+        const id = e.currentTarget.dataset.id;
+        location.hash = `#order-form/${id}`;
+      })
+    );
+
+    // Tombol “Hapus”
+    document.querySelectorAll('.delete-order').forEach(btn =>
+      btn.addEventListener('click', e => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Hapus order ini?')) return;
+        OrderService.deleteOrder(id);
+        this.render();
+      })
+    );
+  }
+};

@@ -5,8 +5,15 @@ import { LoginView }         from './auth/LoginView.js';
 import { InvoiceFormView }   from './views/InvoiceFormView.js';
 import { InvoiceListView }   from './views/InvoiceListView.js';
 import { InvoiceDetailView } from './views/InvoiceDetailView.js';
-import { AlertService } from './services/AlertService.js';
+import { ClientListView }    from './views/ClientListView.js';
+import { ClientFormView }    from './views/ClientFormView.js';
+import { OrderListView }  from './views/OrderListView.js';
+import { OrderFormView }  from './views/OrderFormView.js';
+import { OrderDetailView } from './views/OrderDetailView.js';
+import { AlertService }      from './services/AlertService.js';
 import { PDFService }        from './services/PDFService.js';
+// Jika nanti ada DashboardView, import di sini:
+// import { DashboardView }     from './views/DashboardView.js';
 
 function bootstrap() {
   // 1) Inisialisasi default user
@@ -27,7 +34,7 @@ function bootstrap() {
     return LoginView.render();
   }
 
-  // 4) Tambahkan class no-header pada body jika di halaman login
+  // 4) Toggle header visibility
   if (route === '#login') {
     document.body.classList.add('no-header');
   } else {
@@ -38,6 +45,25 @@ function bootstrap() {
   switch (route) {
     case '#login':
       LoginView.render();
+      break;
+    // Dashboard nanti di-uncomment jika modul sudah tersedia
+    case '#dashboard':
+      DashboardView.render();
+      break;
+    case '#clients':
+      ClientListView.render();
+      break;
+    case '#client-form':
+      ClientFormView.render();
+      break;
+    case '#order-list':
+      OrderListView.render(); 
+      break;
+    case '#order-form':
+      OrderFormView.render(); 
+      break;
+    case '#order-detail':
+      OrderDetailView.render(); 
       break;
     case '#invoice-form':
       InvoiceFormView.render();
