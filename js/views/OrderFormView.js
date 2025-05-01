@@ -4,14 +4,21 @@ import { ClientService } from '../services/ClientService.js';
 
 export const OrderFormView = {
   render() {
-    // 1) Ambil ID dengan benar
     const [ , orderId ] = location.hash.split('/');
-    // 2) Jika ada ID, load data existing, kalau tidak pakai template kosong
+
+    // Hitung default today dalam format YYYY-MM-DD
+    const today = new Date().toISOString().slice(0,10);
+
+    // Data existing atau template baru
     const data = orderId
       ? OrderService.getOrder(orderId)
-      : { clientId:'', clientCode:'', package:'', model:'', items:[{size:'',qtyFabric:1,price:0}], notes:'' };
+      : { 
+          clientId: '', clientCode: '', package: '', model: '',
+          items: [{ size:'', qtyFabric:1, price:0 }], 
+          notes: '', 
+          orderDate: today  // tambah properti orderDate
+        };
 
-    // 3) Build HTML
     const clients = ClientService.getAllClients();
     const opts = clients.map(c =>
       `<option value="${c.id}" ${c.id===data.clientId?'selected':''}>${c.name}</option>`
@@ -20,9 +27,9 @@ export const OrderFormView = {
     const rowsHTML = (data.items || []).map((it, idx) => `
       <tr data-index="${idx+1}">
         <td>${idx+1}</td>
-        <td><input name="size" value="${it.size}" required /></td>
-        <td><input name="qtyFabric" type="number" min="1" value="${it.qtyFabric}" required /></td>
-        <td><input name="price" type="number" min="0" value="${it.price}" required /></td>
+        <td><input name="size" value="${it.size}" required/></td>
+        <td><input name="qtyFabric" type="number" min="1" value="${it.qtyFabric}" required/></td>
+        <td><input name="price" type="number" min="0" value="${it.price}" required/></td>
         <td><button type="button" class="delete-row-btn">Hapus</button></td>
       </tr>
     `).join('');
@@ -45,13 +52,21 @@ export const OrderFormView = {
             <label>Paket Produksi</label>
             <select id="package" required>
               ${['Sample','Basic','Produksi','Produksi Plus']
-                 .map(p=>`<option ${p===data.package?'selected':''}>${p}</option>`).join('')}
+                .map(p=>`<option ${p===data.package?'selected':''}>${p}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
             <label>Model</label>
-            <input id="model" value="${data.model||''}" required />
+            <input id="model" value="${data.model||''}" required/>
           </div>
+
+          <!-- Tanggal Order -->
+          <div class="form-group">
+            <label>Tanggal Order</label>
+            <input type="date" id="orderDate" name="orderDate"
+              value="${data.orderDate || today}" required />
+          </div>
+
           <table class="item-table">
             <thead>
               <tr><th>No</th><th>Size</th><th>Qty</th><th>Price/pcs</th><th>Aksi</th></tr>
@@ -59,12 +74,13 @@ export const OrderFormView = {
             <tbody id="order-items">${rowsHTML}</tbody>
           </table>
           <button type="button" id="add-row-btn" class="btn">+ Tambah Baris</button>
+
           <div class="form-group">
             <label>Deskripsi Tambahan</label>
-            <textarea id="notes">${data.notes||''}</textarea>
+            <textarea id="notes" name="notes">${data.notes||''}</textarea>
           </div>
           <div class="form-group">
-            <button class="btn">${orderId?'Update':'Simpan'}</button>
+            <button type="submit" class="btn">${orderId?'Update':'Simpan'}</button>
             <button type="button" id="cancel-btn" class="btn">Batal</button>
           </div>
         </form>
@@ -111,24 +127,29 @@ export const OrderFormView = {
 
     form.addEventListener('submit', e => {
       e.preventDefault();
+      // Ambil items
       const items = Array.from(tbody.children).map(tr => ({
         size: tr.querySelector('input[name="size"]').value.trim(),
         qtyFabric: Number(tr.querySelector('input[name="qtyFabric"]').value),
         price: Number(tr.querySelector('input[name="price"]').value)
       }));
+
+      const existing = OrderService.getOrder(orderId) || {};
       const orderObj = {
         id: orderId,
+        orderCode: existing.orderCode,
+        createdAt: existing.createdAt,
         clientId: clientSelect.value,
         clientName: clientSelect.options[clientSelect.selectedIndex].text,
         clientCode: codeInput.value,
         package: document.getElementById('package').value,
         model: document.getElementById('model').value.trim(),
+        orderDate: document.getElementById('orderDate').value,  // simpan tanggal
         items,
         notes: document.getElementById('notes').value.trim(),
-        status: orderId
-          ? OrderService.getOrder(orderId).status
-          : 'Draft'
+        status: existing.status
       };
+
       OrderService.saveOrder(orderObj);
       location.hash = '#order-list';
     });

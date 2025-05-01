@@ -4,7 +4,7 @@ import { ClientService } from '../services/ClientService.js';
 export const ClientFormView = {
   render() {
     const app = document.getElementById('app');
-    const [ , , id ] = location.hash.split('/');
+    const [ , id ] = location.hash.split('/');
     const client = id ? ClientService.getClient(id) : {};
 
     app.innerHTML = `

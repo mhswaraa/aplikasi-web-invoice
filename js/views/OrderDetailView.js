@@ -38,6 +38,7 @@ export const OrderDetailView = {
         <p><strong>Paket:</strong> ${o.package}</p>
         <p><strong>Model:</strong> ${o.model}</p>
         <p><strong>Status:</strong> ${o.status}</p>
+        <p><strong>Deskripsi:</strong> ${o.notes}</p>
         <p><strong>Dibuat:</strong> ${new Date(o.createdAt).toLocaleString()}</p>
 
         <table class="item-table">
