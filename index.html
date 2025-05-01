@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-  <!-- HEADER GLOBAL -->
+  <!-- HEADER GLOBAL (Sidebar) -->
   <header class="site-header">
     <div class="container header-inner">
       <span class="brand-header__name">FLEUR STUDIO</span>
@@ -19,20 +19,19 @@
         <a href="#invoice-list">Invoice</a>
         <a href="#" id="logout-btn">Logout</a>
       </nav>
-      <button class="nav-toggle" aria-label="Toggle menu">
-        ☰
-      </button>
+      <button class="nav-toggle" aria-label="Toggle menu">☰</button>
     </div>
   </header>
 
   <!-- AREA VIEW DINAMIS -->
   <main id="app"></main>
 
-    <!-- CDN html2pdf.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module" src="./js/App.js"></script>
+  <!-- LIBRARIES -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
+  <!-- APP MODULE -->
+  <script type="module" src="./js/App.js" defer></script>
 </body>
 </html>

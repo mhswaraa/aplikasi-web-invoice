@@ -100,6 +100,23 @@ export const InvoiceDetailView = {
             <div class="grand-total">Total: <span>${grossTotal.toLocaleString()}</span></div>
           </div>
         </div>
+        <br>
+        <br>
+        <br>
+        <div class="signature-block" style="margin-top:2rem; display:flex; justify-content:space-between;">
+    <!-- Tanda tangan penerbit -->
+    <div class="sig-col" style="text-align:center;">
+      <div>__________________________</div>
+      <div style="margin-top:0.5rem;">(Paramastri Sita Nabila)</div>
+      <div>Founder/CEO</div>
+    </div>
+    <!-- Tanda tangan penerima (opsional) -->
+    <div class="sig-col" style="text-align:center;">
+      <div>__________________________</div>
+      <div style="margin-top:0.5rem;">(${inv.buyerName})</div>
+      <div>Penerima</div>
+    </div>
+  </div>
 
         <!-- ACTION BUTTONS -->
         <div class="no-print actions">
@@ -149,14 +166,16 @@ export const InvoiceDetailView = {
 
     // 1) Cetak Invoice: sembunyikan op-report
     document.getElementById('print-btn').addEventListener('click', () => {
-      const reportEl = document.getElementById('op-report');
-      reportEl.style.display = 'none';
-
-      PDFService.exportInvoiceToPDF('invoice-detail', `${inv.number}.pdf`);
-
-      setTimeout(() => {
-        reportEl.style.display = 'none';
-      }, 300);
+      // Sembunyikan area tombol action
+      const actionsEl = document.querySelector('.actions');
+      actionsEl.style.display = 'none';
+    
+      // Ekspor PDF
+      PDFService.exportInvoiceToPDF('invoice-detail', `${inv.number}.pdf`)
+        .then(() => {
+          // Tampilkan kembali tombol setelah ekspor selesai
+          actionsEl.style.display = '';
+        });
     });
 
     // 2) Simpan DB

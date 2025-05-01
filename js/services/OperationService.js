@@ -4,6 +4,9 @@ const ENTITY = 'operations';
 
 export const OperationService = {
   /** Ambil semua operasi untuk sebuah invoice */
+  getAllOperations() {
+    return StorageService.getAll(ENTITY);
+  },
   getByInvoice(invoiceId) {
     return StorageService
       .getAll(ENTITY)

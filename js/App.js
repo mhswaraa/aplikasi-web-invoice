@@ -1,20 +1,21 @@
-import { AuthService }       from './auth/AuthService.js';
-import { LoginView }         from './auth/LoginView.js';
-import { InvoiceFormView }   from './views/InvoiceFormView.js';
-import { InvoiceListView }   from './views/InvoiceListView.js';
-import { InvoiceDetailView } from './views/InvoiceDetailView.js';
-import { ClientListView }    from './views/ClientListView.js';
-import { ClientFormView }    from './views/ClientFormView.js';
-import { OrderListView }     from './views/OrderListView.js';
-import { OrderFormView }     from './views/OrderFormView.js';
-import { OrderDetailView }   from './views/OrderDetailView.js';
+// /js/App.js
+
+import { AuthService }        from './auth/AuthService.js';
+import { LoginView }          from './auth/LoginView.js';
+import { InvoiceFormView }    from './views/InvoiceFormView.js';
+import { InvoiceListView }    from './views/InvoiceListView.js';
+import { InvoiceDetailView }  from './views/InvoiceDetailView.js';
+import { ClientListView }     from './views/ClientListView.js';
+import { ClientFormView }     from './views/ClientFormView.js';
+import { OrderListView }      from './views/OrderListView.js';
+import { OrderFormView }      from './views/OrderFormView.js';
+import { OrderDetailView }    from './views/OrderDetailView.js';
 import { ProductionListView } from './views/ProductionListView.js';
 import { ProductionFormView } from './views/ProductionFormView.js';
-import { OperationalView } from './views/OperationalView.js';
-import { AlertService }      from './services/AlertService.js';
-import { PDFService }        from './services/PDFService.js';
-// import DashboardView jika sudah tersedia
-// import { DashboardView }     from './views/DashboardView.js';
+import { OperationalView }    from './views/OperationalView.js';
+import { DashboardView }      from './views/DashboardView.js';    // ← import DashboardView
+import { AlertService }       from './services/AlertService.js';
+import { PDFService }         from './services/PDFService.js';
 
 function bootstrap() {
   // 1) Inisialisasi default user
@@ -31,7 +32,6 @@ function bootstrap() {
 
   // 3) Proteksi route selain login
   if (route !== '#login' && !AuthService.isAuthenticated()) {
-    // simpan tujuan terlebih dahulu
     sessionStorage.setItem('redirectHash', location.hash);
     location.hash = '#login';
     return LoginView.render();
@@ -49,7 +49,7 @@ function bootstrap() {
     case '#login':
       LoginView.render();
       break;
-    case '#dashboard':
+    case '#dashboard':           // ← ini sudah aktif
       DashboardView.render();
       break;
     case '#clients':
@@ -106,7 +106,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Logout button
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
+    logoutBtn.addEventListener('click', e => {
       e.preventDefault();
       AuthService.logout();
       location.hash = '#login';
