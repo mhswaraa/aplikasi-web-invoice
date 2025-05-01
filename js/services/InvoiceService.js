@@ -1,4 +1,5 @@
 // /js/services/InvoiceService.js
+
 import { StorageService } from './StorageService.js';
 
 const ENTITY = 'invoices';
@@ -6,7 +7,20 @@ const ENTITY = 'invoices';
 export const InvoiceService = {
   /**
    * Buat invoice baru.
-   * @param {{ buyerName: string, items: Array<{name:string, model?:string, size:string, qty:number, price:number}>, taxPercent?:number, discountPercent?:number }} param0
+   * @param {{
+   *   buyerName: string,
+   *   items: Array<{
+   *     name: string,
+   *     model?: string,
+   *     color?: string,
+   *     size: string,
+   *     qty: number,
+   *     price: number
+   *   }>,
+   *   taxPercent?: number,
+   *   discountPercent?: number
+   * }} params
+   * @returns {object} invoice yang baru dibuat
    */
   createInvoice({ buyerName, items, taxPercent = 0, discountPercent = 0 }) {
     // 1) Tanggal hari ini (YYYY-MM-DD)
@@ -14,18 +28,19 @@ export const InvoiceService = {
     // 2) Generate nomor invoice
     const number = this.generateInvoiceNumber();
 
-    // 3) Clone dan normalisasi items, pastikan model ikut tercopy
-    const invoiceItems = items.map(it => ({
-      name:  it.name,
-      model: it.model || '',    // wariskan model, fallback ke string kosong
-      size:  it.size,
-      qty:   it.qty,
-      price: it.price
+    // 3) Clone dan normalisasi items—pastikan model & color ikut tersimpan
+    const invoiceItems = (items || []).map(it => ({
+      name:  it.name       || '',
+      model: it.model      || '',
+      color: it.color      || '',
+      size:  it.size       || '',
+      qty:   Number(it.qty)   || 0,
+      price: Number(it.price) || 0
     }));
 
     // 4) Hitung subtotal
     const subtotal = invoiceItems
-      .reduce((sum, it) => sum + (it.qty * (it.price || 0)), 0);
+      .reduce((sum, it) => sum + it.qty * it.price, 0);
 
     // 5) Hitung tax & discount
     const taxAmount      = subtotal * (taxPercent      / 100);
@@ -37,17 +52,17 @@ export const InvoiceService = {
       buyerName,
       date,
       number,
-      items: invoiceItems,
+      items:             invoiceItems,
       subtotal,
       taxPercent,
       taxAmount,
       discountPercent,
       discountAmount,
       total,
-      paid: false          // kamu bisa gunakan ini untuk status paid/unpaid
+      paid: false       // status paid/unpaid
     };
 
-    // 7) Simpan ke storage dan kembalikan data
+    // 7) Simpan ke storage dan kembalikan data hasil create
     return StorageService.create(ENTITY, invoice);
   },
 
@@ -66,9 +81,12 @@ export const InvoiceService = {
     return StorageService.delete(ENTITY, id);
   },
 
-  /** Buat nomor unik: INV-YYYYMMDD-xxx */
+  /**
+   * Generate nomor unik: INV-YYYYMMDD-XXX
+   * XXX = urutan invoice di hari ini (001, 002, dst)
+   */
   generateInvoiceNumber() {
-    const all = this.getAllInvoices();
+    const all   = this.getAllInvoices() || [];
     const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
     const seq   = String(
       all.filter(inv => inv.number.includes(today)).length + 1

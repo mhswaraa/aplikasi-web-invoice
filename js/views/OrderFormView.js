@@ -6,17 +6,16 @@ export const OrderFormView = {
   render() {
     const [ , orderId ] = location.hash.split('/');
 
-    // Hitung default today dalam format YYYY-MM-DD
+    // default today
     const today = new Date().toISOString().slice(0,10);
 
-    // Data existing atau template baru
+    // existing data or new template
     const data = orderId
       ? OrderService.getOrder(orderId)
-      : { 
+      : {
           clientId: '', clientCode: '', package: '', model: '',
-          items: [{ size:'', qtyFabric:1, price:0 }], 
-          notes: '', 
-          orderDate: today  // tambah properti orderDate
+          items: [{ size:'', color:'', qtyFabric:1, price:0 }],
+          notes: '', orderDate: today
         };
 
     const clients = ClientService.getAllClients();
@@ -28,6 +27,7 @@ export const OrderFormView = {
       <tr data-index="${idx+1}">
         <td>${idx+1}</td>
         <td><input name="size" value="${it.size}" required/></td>
+        <td><input name="color" value="${it.color||''}" placeholder="Warna" required/></td>
         <td><input name="qtyFabric" type="number" min="1" value="${it.qtyFabric}" required/></td>
         <td><input name="price" type="number" min="0" value="${it.price}" required/></td>
         <td><button type="button" class="delete-row-btn">Hapus</button></td>
@@ -64,12 +64,14 @@ export const OrderFormView = {
           <div class="form-group">
             <label>Tanggal Order</label>
             <input type="date" id="orderDate" name="orderDate"
-              value="${data.orderDate || today}" required />
+              value="${data.orderDate||today}" required />
           </div>
 
           <table class="item-table">
             <thead>
-              <tr><th>No</th><th>Size</th><th>Qty</th><th>Price/pcs</th><th>Aksi</th></tr>
+              <tr>
+                <th>No</th><th>Size</th><th>Warna</th><th>Qty</th><th>Price/pcs</th><th>Aksi</th>
+              </tr>
             </thead>
             <tbody id="order-items">${rowsHTML}</tbody>
           </table>
@@ -109,6 +111,7 @@ export const OrderFormView = {
         tr.innerHTML = `
           <td>${rowCount}</td>
           <td><input name="size" required/></td>
+          <td><input name="color" required/></td>
           <td><input name="qtyFabric" type="number" min="1" value="1" required/></td>
           <td><input name="price" type="number" min="0" value="0" required/></td>
           <td><button type="button" class="delete-row-btn">Hapus</button></td>`;
@@ -127,9 +130,9 @@ export const OrderFormView = {
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      // Ambil items
       const items = Array.from(tbody.children).map(tr => ({
         size: tr.querySelector('input[name="size"]').value.trim(),
+        color: tr.querySelector('input[name="color"]').value.trim(),
         qtyFabric: Number(tr.querySelector('input[name="qtyFabric"]').value),
         price: Number(tr.querySelector('input[name="price"]').value)
       }));
@@ -144,7 +147,7 @@ export const OrderFormView = {
         clientCode: codeInput.value,
         package: document.getElementById('package').value,
         model: document.getElementById('model').value.trim(),
-        orderDate: document.getElementById('orderDate').value,  // simpan tanggal
+        orderDate: document.getElementById('orderDate').value,
         items,
         notes: document.getElementById('notes').value.trim(),
         status: existing.status

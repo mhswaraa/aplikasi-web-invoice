@@ -1,5 +1,4 @@
 // /js/views/OrderDetailView.js
-
 import { OrderService } from '../services/OrderService.js';
 
 export const OrderDetailView = {
@@ -13,13 +12,14 @@ export const OrderDetailView = {
       return;
     }
 
-    // Bangun baris detail items
+    // Build detail rows
     const itemsHTML = (Array.isArray(o.items) ? o.items : []).map((it, idx) => {
       const lineTotal = (Number(it.qtyFabric) || 0) * (Number(it.price) || 0);
       return `
         <tr>
           <td>${idx+1}</td>
           <td>${it.size}</td>
+          <td>${it.color || '-'}</td>
           <td class="text-right">${it.qtyFabric}</td>
           <td class="text-right">${(it.price).toLocaleString()}</td>
           <td class="text-right">${lineTotal.toLocaleString()}</td>
@@ -27,25 +27,32 @@ export const OrderDetailView = {
       `;
     }).join('');
 
-    // Hitung subtotal kain dan total biaya
-    const subtotalQty = o.items.reduce((sum, it) => sum + (Number(it.qtyFabric)||0), 0);
-    const subtotalCost= o.items.reduce((sum, it) => sum + ((Number(it.qtyFabric)||0)*(Number(it.price)||0)), 0);
+    // Compute totals
+    const subtotalQty  = o.items.reduce((sum, it) => sum + (Number(it.qtyFabric)||0), 0);
+    const subtotalCost = o.items.reduce((sum, it) => sum + ((Number(it.qtyFabric)||0)*(Number(it.price)||0)), 0);
+
+    // Format date fields
+    const createdAt = new Date(o.createdAt).toLocaleString();
+    const orderDate = new Date(o.orderDate || o.createdAt).toLocaleDateString();
 
     app.innerHTML = `
       <div class="order-detail-container">
-        <h2>Detail Order ${o.orderCode}</h2>
+        <h2>Detail Order</h2>
+        <p><strong>Tanggal Order:</strong> ${orderDate}</p>
         <p><strong>Klien:</strong> ${o.clientName} (${o.clientCode})</p>
         <p><strong>Paket:</strong> ${o.package}</p>
         <p><strong>Model:</strong> ${o.model}</p>
+        <p><strong>Warna:</strong> ${o.items.map(it=>it.color||'-').join(', ')}</p>
         <p><strong>Status:</strong> ${o.status}</p>
-        <p><strong>Deskripsi:</strong> ${o.notes}</p>
-        <p><strong>Dibuat:</strong> ${new Date(o.createdAt).toLocaleString()}</p>
+        <p><strong>Deskripsi:</strong> ${o.notes || '-'}</p>
+        <p><strong>Dibuat:</strong> ${createdAt}</p>
 
         <table class="item-table">
           <thead>
             <tr>
               <th>No</th>
               <th>Size</th>
+              <th>Warna</th>
               <th class="text-right">Qty Kain</th>
               <th class="text-right">Harga/pcs</th>
               <th class="text-right">Subtotal</th>
@@ -56,8 +63,8 @@ export const OrderDetailView = {
           </tbody>
         </table>
 
-        <p class="total-qty">Total Qty Kain: ${subtotalQty}</p>
-        <p class="total-qty">Total Biaya: ${subtotalCost.toLocaleString()}</p>
+        <p class="total-qty"><strong>Total Qty Kain:</strong> ${subtotalQty}</p>
+        <p class="total-qty"><strong>Total Biaya:</strong> ${subtotalCost.toLocaleString()}</p>
 
         <div class="no-print">
           <button id="back-btn" class="btn">Kembali ke List</button>
@@ -65,6 +72,7 @@ export const OrderDetailView = {
         </div>
       </div>
     `;
+
     this.afterRender(id);
   },
 
@@ -74,7 +82,6 @@ export const OrderDetailView = {
 
     document.getElementById('to-production')
       .addEventListener('click', () => {
-        // Arahkan ke form produksi, misal #production-form/{orderId}
         location.hash = `#production-form/${id}`;
       });
   }

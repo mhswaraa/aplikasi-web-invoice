@@ -10,26 +10,25 @@ export const ProductionListView = {
       const totalJadi   = p.items.reduce((sum, it) => sum + (it.qtyJadi || 0), 0);
       const totalDefect = p.items.reduce((sum, it) => sum + (it.defect  || 0), 0);
 
-      // Ambil tanggal order jika ada, format ke "DD/MM/YYYY"
+      // Tgl order
       const orderDate = p.orderDate
         ? new Date(p.orderDate).toLocaleDateString('id-ID')
+        : '-';
+
+      // Color list
+      const colors = Array.isArray(p.items)
+        ? [...new Set(p.items.map(it => it.color || '-'))].join(', ')
         : '-';
 
       return `
         <tr>
           <td>${i + 1}</td>
-          <!-- Ganti kode order dengan tanggal order -->
           <td>${orderDate}</td>
-
-          <!-- Tambahkan kolom Model -->
           <td>${p.model || '-'}</td>
-
+          <td>${colors}</td>
           <td>${p.clientName}</td>
           <td>${p.status.replace('_', ' ')}</td>
-          
-          <!-- Tanggal produksi mulai -->
           <td>${new Date(p.createdAt).toLocaleDateString('id-ID')}</td>
-
           <td>${totalJadi}</td>
           <td>${totalDefect}</td>
           <td>
@@ -49,6 +48,7 @@ export const ProductionListView = {
               <th>No</th>
               <th>Tgl Order</th>
               <th>Model</th>
+              <th>Warna</th>
               <th>Klien</th>
               <th>Status</th>
               <th>Tgl Mulai</th>
@@ -60,7 +60,7 @@ export const ProductionListView = {
           <tbody>
             ${rows || `
               <tr>
-                <td colspan="9" style="text-align:center">Belum ada produksi.</td>
+                <td colspan="10" style="text-align:center">Belum ada produksi.</td>
               </tr>`}
           </tbody>
         </table>
@@ -70,7 +70,6 @@ export const ProductionListView = {
   },
 
   afterRender() {
-    // Tombol Edit → ke ProductionFormView
     document.querySelectorAll('.edit-prod').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
@@ -78,7 +77,6 @@ export const ProductionListView = {
       })
     );
 
-    // Tombol Hapus
     document.querySelectorAll('.delete-prod').forEach(btn =>
       btn.addEventListener('click', e => {
         if (!confirm('Yakin hapus laporan produksi ini?')) return;

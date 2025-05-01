@@ -14,30 +14,31 @@ export const ProductionService = {
   },
 
   initFromOrder(orderId) {
-    // 1) Ambil data order
     const ord = OrderService.getOrder(orderId);
-    if (!ord) throw new Error('Order tidak ditemukan');
+    if (!ord) return null;
 
-    // 2) Bangun object produksi dengan warisan properti order
+    // salin setiap item termasuk color
+    const items = (ord.items || []).map(it => ({
+      size:     it.size,
+      color:    it.color || '',
+      price:    it.price,
+      qtyFabric: it.qtyFabric,
+      qtyJadi:   0,
+      defect:    0
+    }));
+
     const prod = {
-      id: '_' + Math.random().toString(36).substr(2, 9),
-      orderId: ord.id,
+      id:        '_' + Math.random().toString(36).substr(2,9),
+      orderId,
       orderCode: ord.orderCode,
-      orderDate: ord.orderDate || ord.createdAt.slice(0,10),  // wariskan tanggal
-      model: ord.model,
-      clientId: ord.clientId,
       clientName: ord.clientName,
-      status: 'Pending',
-      createdAt: new Date().toISOString(),
-      items: ord.items.map(it => ({
-        size: it.size,
-        qtyFabric: it.qtyFabric,
-        price: it.price,
-        qtyJadi: 0,
-        defect: 0
-      }))
+      clientId:   ord.clientId,
+      model:      ord.model,
+      orderDate:  ord.orderDate,
+      createdAt:  new Date().toISOString(),
+      status:     'Pending',
+      items
     };
-
     StorageService.create(ENTITY, prod);
     return prod;
   },

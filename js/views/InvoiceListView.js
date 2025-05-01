@@ -1,12 +1,13 @@
 // /js/views/InvoiceListView.js
 
-import { InvoiceService }        from '../services/InvoiceService.js';
-import { ImportExportService }   from '../services/ImportExportService.js';
+import { InvoiceService }      from '../services/InvoiceService.js';
+import { ImportExportService } from '../services/ImportExportService.js';
 
 export const InvoiceListView = {
   render() {
     const app = document.getElementById('app');
     let invoices = [];
+
     try {
       invoices = InvoiceService.getAllInvoices() || [];
     } catch (err) {
@@ -23,7 +24,7 @@ export const InvoiceListView = {
       </div>
     `;
 
-    // Kasih tahu kalau error atau kosong
+    // Jika tidak ada data
     if (!Array.isArray(invoices) || invoices.length === 0) {
       app.innerHTML = `
         <div class="invoice-list-container">
@@ -37,19 +38,23 @@ export const InvoiceListView = {
       return;
     }
 
-    // Bangun baris tabel dengan proteksi items
+    // Bangun baris tabel, ambil model & warna unik
     const rows = invoices.map(inv => {
       const items = Array.isArray(inv.items) ? inv.items : [];
-      const totalQty = items.reduce((sum, it) => {
-        const qty = Number(it.qty) || 0;
-        return sum + qty;
-      }, 0);
+
+      const totalQty = items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+
+      // ambil daftar model & warna unik
+      const models = [...new Set(items.map(it => it.model).filter(m => m))].join(', ') || '-';
+      const colors = [...new Set(items.map(it => it.color).filter(c => c))].join(', ') || '-';
 
       return `
         <tr>
           <td>${inv.number || '-'}</td>
-          <td>${inv.date || '-'}</td>
+          <td>${inv.date   || '-'}</td>
           <td>${inv.buyerName || '-'}</td>
+          <td>${models}</td>
+          <td>${colors}</td>
           <td>${totalQty}</td>
           <td>
             <button class="btn view-detail" data-id="${inv.id}">Lihat</button>
@@ -69,6 +74,8 @@ export const InvoiceListView = {
               <th>Nomor</th>
               <th>Tanggal</th>
               <th>Buyer</th>
+              <th>Model</th>
+              <th>Warna</th>
               <th>Total Qty</th>
               <th>Aksi</th>
             </tr>
@@ -82,18 +89,18 @@ export const InvoiceListView = {
   },
 
   afterRender() {
-    // Back to form
+    // Kembali ke form buat invoice
     document.getElementById('back-to-form')
       .addEventListener('click', () => location.hash = '#invoice-form');
 
-    // View detail
+    // Lihat detail
     document.querySelectorAll('.view-detail').forEach(btn =>
       btn.addEventListener('click', e =>
         location.hash = `#invoice-detail/${e.currentTarget.dataset.id}`
       )
     );
 
-    // Delete
+    // Hapus invoice
     document.querySelectorAll('.delete-inv').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
@@ -107,23 +114,21 @@ export const InvoiceListView = {
     const btnExport = document.getElementById('export-csv');
     if (btnExport) {
       btnExport.addEventListener('click', () => {
-        console.log('Export CSV button clicked');
-        window.ImportExportService.exportCSV('invoices');
+        ImportExportService.exportCSV('invoices');
       });
     }
 
-    // Trigger Import CSV
+    // Import CSV trigger
     const importInput = document.getElementById('import-csv');
-    document
-      .getElementById('trigger-import-csv')
+    document.getElementById('trigger-import-csv')
       .addEventListener('click', () => importInput.click());
 
-    // Handle import file
+    // Handle CSV import
     if (importInput) {
       importInput.addEventListener('change', e => {
         const file = e.target.files[0];
         if (!file) return;
-        window.ImportExportService.importCSV('invoices', file, (count, err) => {
+        ImportExportService.importCSV('invoices', file, (count, err) => {
           if (err) {
             alert('Import gagal: ' + err.message);
           } else {
