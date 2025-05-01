@@ -1,6 +1,5 @@
-// /js/auth/LoginView.js
-
 import { AuthService } from './AuthService.js';
+import { AlertService } from '../services/AlertService.js';
 
 export const LoginView = {
   render() {
@@ -28,7 +27,7 @@ export const LoginView = {
   },
 
   afterRender() {
-    const form = document.getElementById('login-form');
+    const form   = document.getElementById('login-form');
     const errMsg = document.getElementById('login-error');
 
     form.addEventListener('submit', async (e) => {
@@ -40,13 +39,14 @@ export const LoginView = {
 
       try {
         await AuthService.login(username, password);
-        // Tampilkan alert sukses
         AlertService.show('Berhasil login!', 'success');
-        // Redirect ke halaman form invoice
-        location.hash = '#invoice-form';
+        // redirect ke rute semula jika ada, atau ke dashboard
+        const dest = sessionStorage.getItem('redirectHash') || '#dashboard';
+        sessionStorage.removeItem('redirectHash');
+        location.hash = dest;
       } catch (err) {
-        // Gagal login: tampilkan pesan
         AlertService.show(err.message, 'error');
+        errMsg.textContent = err.message;
         errMsg.style.display = 'block';
       }
     });

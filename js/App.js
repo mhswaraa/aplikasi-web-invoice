@@ -1,5 +1,3 @@
-// /js/App.js
-
 import { AuthService }       from './auth/AuthService.js';
 import { LoginView }         from './auth/LoginView.js';
 import { InvoiceFormView }   from './views/InvoiceFormView.js';
@@ -7,12 +5,15 @@ import { InvoiceListView }   from './views/InvoiceListView.js';
 import { InvoiceDetailView } from './views/InvoiceDetailView.js';
 import { ClientListView }    from './views/ClientListView.js';
 import { ClientFormView }    from './views/ClientFormView.js';
-import { OrderListView }  from './views/OrderListView.js';
-import { OrderFormView }  from './views/OrderFormView.js';
-import { OrderDetailView } from './views/OrderDetailView.js';
+import { OrderListView }     from './views/OrderListView.js';
+import { OrderFormView }     from './views/OrderFormView.js';
+import { OrderDetailView }   from './views/OrderDetailView.js';
+import { ProductionListView } from './views/ProductionListView.js';
+import { ProductionFormView } from './views/ProductionFormView.js';
+import { OperationalView } from './views/OperationalView.js';
 import { AlertService }      from './services/AlertService.js';
 import { PDFService }        from './services/PDFService.js';
-// Jika nanti ada DashboardView, import di sini:
+// import DashboardView jika sudah tersedia
 // import { DashboardView }     from './views/DashboardView.js';
 
 function bootstrap() {
@@ -26,10 +27,12 @@ function bootstrap() {
 
   // 2) Tentukan route dari location.hash
   const hash  = location.hash || '#login';
-  const route = hash.split('/')[0];
+  const route = hash.split('?')[0].split('/')[0];
 
   // 3) Proteksi route selain login
   if (route !== '#login' && !AuthService.isAuthenticated()) {
+    // simpan tujuan terlebih dahulu
+    sessionStorage.setItem('redirectHash', location.hash);
     location.hash = '#login';
     return LoginView.render();
   }
@@ -46,7 +49,6 @@ function bootstrap() {
     case '#login':
       LoginView.render();
       break;
-    // Dashboard nanti di-uncomment jika modul sudah tersedia
     case '#dashboard':
       DashboardView.render();
       break;
@@ -57,13 +59,19 @@ function bootstrap() {
       ClientFormView.render();
       break;
     case '#order-list':
-      OrderListView.render(); 
+      OrderListView.render();
       break;
     case '#order-form':
-      OrderFormView.render(); 
+      OrderFormView.render();
       break;
     case '#order-detail':
-      OrderDetailView.render(); 
+      OrderDetailView.render();
+      break;
+    case '#production-list':
+      ProductionListView.render();
+      break;
+    case '#production-form':
+      ProductionFormView.render();
       break;
     case '#invoice-form':
       InvoiceFormView.render();
@@ -74,12 +82,15 @@ function bootstrap() {
     case '#invoice-detail':
       InvoiceDetailView.render();
       break;
+    case '#operation':
+      OperationalView.render();
+      break;
     default:
       LoginView.render();
   }
 }
 
-// 6) Pasang bootstrap saat DOM siap dan saat hash berubah
+// pasang bootstrap
 window.addEventListener('DOMContentLoaded', () => {
   bootstrap();
 

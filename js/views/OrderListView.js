@@ -1,6 +1,8 @@
 // /js/views/OrderListView.js
 
 import { OrderService } from '../services/OrderService.js';
+import { ProductionService } from '../services/ProductionService.js';
+import { AlertService } from '../services/AlertService.js';
 
 export const OrderListView = {
   render() {
@@ -12,6 +14,11 @@ export const OrderListView = {
       const totalQty = Array.isArray(o.items)
         ? o.items.reduce((sum, it) => sum + (Number(it.qtyFabric) || 0), 0)
         : 0;
+
+      // Tombol “Proses” hanya untuk order Draft/Confirmed
+      const btnProcess = ['Draft','Confirmed'].includes(o.status)
+        ? `<button class="btn process-order" data-id="${o.id}">Proses</button>`
+        : '';
 
       return `
         <tr>
@@ -26,7 +33,7 @@ export const OrderListView = {
             <button class="btn detail-order" data-id="${o.id}">Detail</button>
             <button class="btn view-order"   data-id="${o.id}">Edit</button>
             <button class="btn delete-order" data-id="${o.id}">Hapus</button>
-            
+            ${btnProcess}
           </td>
         </tr>
       `;
@@ -64,11 +71,11 @@ export const OrderListView = {
   },
 
   afterRender() {
-    // Tombol “Tambah Order”
+    // “Tambah Order”
     document.getElementById('add-order')
       .addEventListener('click', () => location.hash = '#order-form');
 
-    // Tombol “Detail”
+    // “Detail”
     document.querySelectorAll('.detail-order').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
@@ -76,7 +83,7 @@ export const OrderListView = {
       })
     );
 
-    // Tombol “Edit”
+    // “Edit”
     document.querySelectorAll('.view-order').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
@@ -84,12 +91,32 @@ export const OrderListView = {
       })
     );
 
-    // Tombol “Hapus”
+    // “Hapus”
     document.querySelectorAll('.delete-order').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
-        if (!confirm('Hapus order ini?')) return;
+        if (!confirm('Yakin hapus order ini?')) return;
         OrderService.deleteOrder(id);
+        this.render();
+      })
+    );
+
+    // “Proses ke Produksi”
+    document.querySelectorAll('.process-order').forEach(btn =>
+      btn.addEventListener('click', e => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Proses order ini ke produksi?')) return;
+
+        // 1) Buat entri produksi dari order
+        const prod = ProductionService.initFromOrder(id);
+
+        // 2) Update status order
+        const ord = OrderService.getOrder(id);
+        ord.status = 'On Production';
+        OrderService.saveOrder(ord);
+
+        // 3) Notifikasi & refresh
+        AlertService.show(`Order ${ord.orderCode} diproses (Prod ID: ${prod.id})`, 'success');
         this.render();
       })
     );

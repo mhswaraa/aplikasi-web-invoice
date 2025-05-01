@@ -276,6 +276,53 @@ body.no-header .site-header {
 }
 
 /* --------------------------------------
+   DASHBOARD
+-------------------------------------- */
+.dashboard-container {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: #f7f7f7;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  color: #2a9d8f;
+  margin-top: 0.5rem;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+}
+
+.top-clients ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.top-clients li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+
+/* --------------------------------------
    CLIENT LIST & FORM
 -------------------------------------- */
 .client-list-container,
@@ -639,5 +686,110 @@ body.no-header .site-header {
   .invoice-pdf-container {
     margin: 0;
     padding: 0;
+  }
+}
+
+/* --------------------------------------
+   OPERATIONAL VIEW
+-------------------------------------- */
+.operation-container,
+.operation-container form {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  animation: slideUp 0.4s ease-out;
+  margin-bottom: 2rem;
+}
+
+.operation-container h2 {
+  color: #2a9d8f;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Form Operasional */
+.operation-container form {
+  margin-bottom: 1.5rem;
+}
+
+.operation-container .form-group {
+  margin-bottom: 1rem;
+}
+
+.operation-container .form-group label {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+.operation-container .form-group input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.operation-container .form-group-inline {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.operation-container .form-group-small {
+  flex: 1;
+}
+
+/* Tombol tambah & kembali */
+.operation-container .btn {
+  margin-right: 0.5rem;
+}
+
+/* Tabel Operasional */
+.operation-container .item-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.operation-container .item-table thead {
+  background: #2a9d8f;
+  color: #fff;
+}
+
+.operation-container .item-table th,
+.operation-container .item-table td {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.operation-container .item-table tbody tr:nth-child(odd) {
+  background: #fafafa;
+}
+
+.operation-container .item-table td .btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.operation-container .item-table tbody tr:hover {
+  background: #f1f5f8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .operation-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  .operation-container .form-group-inline {
+    flex-direction: column;
+  }
+  .operation-container .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
   }
 }
