@@ -4,37 +4,58 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Company Invoice App</title>
-  <link rel="stylesheet" href="./css/style.css" />
+
+  <!-- Tailwind JIT via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <!-- HEADER GLOBAL (Sidebar) -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <span class="brand-header__name">FLEUR STUDIO</span>
-      <br>
-      <br>
-      <br>
-      <nav class="nav-links">
-        <a href="#dashboard">Dashboard</a>
-        <a href="#clients">Data Klien</a>
-        <a href="#order-list">Order Masuk</a>
-        <a href="#production-list">Laporan Produksi</a>
-        <a href="#invoice-list">Invoice</a>
-        <a href="#" id="logout-btn">Logout</a>
-      </nav>
-      <button class="nav-toggle" aria-label="Toggle menu">☰</button>
-    </div>
-  </header>
+<body class="flex bg-gray-100 min-h-screen">
 
-  <!-- AREA VIEW DINAMIS -->
-  <main id="app"></main>
+  <!-- Sidebar (desktop) -->
+  <aside id="sidebar"
+         class="hidden md:flex flex-col w-64 bg-teal-600 text-white fixed inset-y-0 left-0 p-6 space-y-8">
+    <h1 class="text-2xl font-bold uppercase tracking-wider">FLEUR STUDIO</h1>
+    <nav class="flex-1 space-y-4">
+      <a href="#dashboard" class="block py-2 px-3 rounded hover:bg-teal-500">Dashboard</a>
+      <a href="#clients"   class="block py-2 px-3 rounded hover:bg-teal-500">Data Klien</a>
+      <a href="#order-list" class="block py-2 px-3 rounded hover:bg-teal-500">Order Masuk</a>
+      <a href="#production-list" class="block py-2 px-3 rounded hover:bg-teal-500">Laporan Produksi</a>
+      <a href="#invoice-list" class="block py-2 px-3 rounded hover:bg-teal-500">Invoice</a>
+      <button id="logout-btn" class="w-full text-left py-2 px-3 rounded hover:bg-teal-500">Logout</button>
+    </nav>
+  </aside>
 
-  <!-- LIBRARIES -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <!-- Mobile nav toggle -->
+  <button id="mobile-toggle"
+          class="md:hidden fixed top-4 left-4 z-50 p-2 bg-teal-600 text-white rounded-lg focus:outline-none">
+    <!-- simple hamburger icon -->
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+  </button>
 
-  <!-- APP MODULE -->
-  <script type="module" src="./js/App.js" defer></script>
+  <!-- Main content -->
+  <main id="app"
+        class="flex-1 ml-0 md:ml-64 p-6 transition-all duration-200">
+    <!-- Konten dinamis akan diinject di sini oleh App.js -->
+  </main>
+
+  <!-- Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- App entrypoint -->
+  <script type="module" src="./js/App.js"></script>
+
+  <!-- Mobile sidebar toggle script -->
+  <script>
+    const btn = document.getElementById('mobile-toggle');
+    const sidebar = document.getElementById('sidebar');
+    btn.addEventListener('click', () => {
+      sidebar.classList.toggle('hidden');
+    });
+  </script>
 </body>
 </html>

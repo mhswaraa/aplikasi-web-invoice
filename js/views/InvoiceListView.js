@@ -15,93 +15,115 @@ export const InvoiceListView = {
       invoices = [];
     }
 
-    // Kontrol Export/Import CSV
-    const csvControls = `
-      <div class="csv-controls" style="margin-bottom:1rem;">
-        <button id="export-csv" class="btn">Export CSV</button>
-        <input type="file" id="import-csv" accept=".csv" style="display:none;" />
-        <button id="trigger-import-csv" class="btn">Import CSV</button>
-      </div>
-    `;
-
-    // Jika tidak ada data
+    // Jika tidak ada invoice
     if (!Array.isArray(invoices) || invoices.length === 0) {
       app.innerHTML = `
-        <div class="invoice-list-container">
-          <h2>Daftar Invoice</h2>
-          <p>Tidak ada data invoice.</p>
-          <button id="back-to-form" class="btn">Buat Invoice Baru</button>
-          ${csvControls}
-        </div>
-      `;
+      <div class="container mx-auto p-6 bg-white shadow-md rounded-lg text-center">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Daftar Invoice</h2>
+        <p class="text-gray-600 mb-6">Belum ada data invoice.</p>
+        <button
+          id="back-to-form"
+          class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
+        >+ Buat Invoice Baru</button>
+      </div>`;
       this.afterRender();
       return;
     }
 
-    // Bangun baris tabel, ambil model & warna unik
-    const rows = invoices.map(inv => {
+    // Bangun baris tabel: nomor, tanggal, buyer, model unik, warna unik, total qty
+    const rows = invoices.map((inv, i) => {
       const items = Array.isArray(inv.items) ? inv.items : [];
-
       const totalQty = items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
 
-      // ambil daftar model & warna unik
+      // daftar model & warna unik
       const models = [...new Set(items.map(it => it.model).filter(m => m))].join(', ') || '-';
       const colors = [...new Set(items.map(it => it.color).filter(c => c))].join(', ') || '-';
 
       return `
-        <tr>
-          <td>${inv.number || '-'}</td>
-          <td>${inv.date   || '-'}</td>
-          <td>${inv.buyerName || '-'}</td>
-          <td>${models}</td>
-          <td>${colors}</td>
-          <td>${totalQty}</td>
-          <td>
-            <button class="btn view-detail" data-id="${inv.id}">Lihat</button>
-            <button class="btn delete-inv" data-id="${inv.id}">Hapus</button>
-          </td>
-        </tr>
-      `;
+      <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+        <td class="px-4 py-2 text-center">${i + 1}</td>
+        <td class="px-4 py-2">${inv.number || '-'}</td>
+        <td class="px-4 py-2">${inv.date   || '-'}</td>
+        <td class="px-4 py-2">${inv.buyerName || '-'}</td>
+        <td class="px-4 py-2">${models}</td>
+        <td class="px-4 py-2">${colors}</td>
+        <td class="px-4 py-2 text-right">${totalQty}</td>
+        <td class="px-4 py-2 text-center space-x-2">
+          <button
+            class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm view-detail"
+            data-id="${inv.id}"
+            title="Lihat Invoice"
+            aria-label="Lihat Invoice"
+          >Lihat</button>
+          <button
+            class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm delete-inv"
+            data-id="${inv.id}"
+            title="Hapus Invoice"
+            aria-label="Hapus Invoice"
+          >Hapus</button>
+        </td>
+      </tr>`;
     }).join('');
 
     app.innerHTML = `
-      <div class="invoice-list-container">
-        <h2>Daftar Invoice</h2>
-        ${csvControls}
-        <table class="item-table">
+    <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-gray-800">Daftar Invoice</h2>
+        <div class="space-x-2">
+          <button
+            id="export-csv"
+            class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm"
+          >Export CSV</button>
+          <input type="file" id="import-csv" accept=".csv" class="hidden" />
+          <button
+            id="trigger-import-csv"
+            class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm"
+          >Import CSV</button>
+          <button
+            id="back-to-form"
+            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm"
+          >+ Buat Invoice Baru</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full table-auto border-collapse">
           <thead>
-            <tr>
-              <th>Nomor</th>
-              <th>Tanggal</th>
-              <th>Buyer</th>
-              <th>Model</th>
-              <th>Warna</th>
-              <th>Total Qty</th>
-              <th>Aksi</th>
+            <tr class="bg-gray-100">
+              <th class="px-4 py-2 text-left text-gray-600">No</th>
+              <th class="px-4 py-2 text-left text-gray-600">Nomor</th>
+              <th class="px-4 py-2 text-left text-gray-600">Tanggal</th>
+              <th class="px-4 py-2 text-left text-gray-600">Buyer</th>
+              <th class="px-4 py-2 text-left text-gray-600">Model</th>
+              <th class="px-4 py-2 text-left text-gray-600">Warna</th>
+              <th class="px-4 py-2 text-right text-gray-600">Total Qty</th>
+              <th class="px-4 py-2 text-center text-gray-600">Aksi</th>
             </tr>
           </thead>
-          <tbody>${rows}</tbody>
+          <tbody>
+            ${rows}
+          </tbody>
         </table>
-        <button id="back-to-form" class="btn">Buat Invoice Baru</button>
       </div>
-    `;
+    </div>`;
+
     this.afterRender();
   },
 
   afterRender() {
-    // Kembali ke form buat invoice
+    // Buat invoice baru
     document.getElementById('back-to-form')
       .addEventListener('click', () => location.hash = '#invoice-form');
 
     // Lihat detail
-    document.querySelectorAll('.view-detail').forEach(btn =>
+    document.querySelectorAll('button[title="Lihat Invoice"]').forEach(btn =>
       btn.addEventListener('click', e =>
         location.hash = `#invoice-detail/${e.currentTarget.dataset.id}`
       )
     );
 
     // Hapus invoice
-    document.querySelectorAll('.delete-inv').forEach(btn =>
+    document.querySelectorAll('button[title="Hapus Invoice"]').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
         if (!confirm('Yakin ingin menghapus invoice ini?')) return;
@@ -111,33 +133,26 @@ export const InvoiceListView = {
     );
 
     // Export CSV
-    const btnExport = document.getElementById('export-csv');
-    if (btnExport) {
-      btnExport.addEventListener('click', () => {
-        ImportExportService.exportCSV('invoices');
-      });
-    }
+    document.getElementById('export-csv')
+      .addEventListener('click', () => ImportExportService.exportCSV('invoices'));
 
-    // Import CSV trigger
+    // Trigger import CSV
     const importInput = document.getElementById('import-csv');
     document.getElementById('trigger-import-csv')
       .addEventListener('click', () => importInput.click());
 
-    // Handle CSV import
-    if (importInput) {
-      importInput.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        ImportExportService.importCSV('invoices', file, (count, err) => {
-          if (err) {
-            alert('Import gagal: ' + err.message);
-          } else {
-            alert(`Berhasil import ${count} invoice`);
-            this.render();
-          }
-        });
-        importInput.value = '';
+    // Handle file import
+    importInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      ImportExportService.importCSV('invoices', file, (count, err) => {
+        if (err) alert('Import gagal: ' + err.message);
+        else {
+          alert(`Berhasil import ${count} invoice`);
+          this.render();
+        }
       });
-    }
+      importInput.value = '';
+    });
   }
 };
