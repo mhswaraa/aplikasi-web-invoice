@@ -4,58 +4,138 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Company Invoice App</title>
-
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/>
   <!-- Tailwind JIT via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="flex bg-gray-100 min-h-screen">
+<body class="flex flex-col bg-gray-100 min-h-screen overflow-x-hidden">
 
-  <!-- Sidebar (desktop) -->
-  <aside id="sidebar"
-         class="hidden md:flex flex-col w-64 bg-teal-600 text-white fixed inset-y-0 left-0 p-6 space-y-8">
-    <h1 class="text-2xl font-bold uppercase tracking-wider">FLEUR STUDIO</h1>
-    <nav class="flex-1 space-y-4">
-      <a href="#dashboard" class="block py-2 px-3 rounded hover:bg-teal-500">Dashboard</a>
-      <a href="#clients"   class="block py-2 px-3 rounded hover:bg-teal-500">Data Klien</a>
-      <a href="#order-list" class="block py-2 px-3 rounded hover:bg-teal-500">Order Masuk</a>
-      <a href="#production-list" class="block py-2 px-3 rounded hover:bg-teal-500">Laporan Produksi</a>
-      <a href="#invoice-list" class="block py-2 px-3 rounded hover:bg-teal-500">Invoice</a>
-      <button id="logout-btn" class="w-full text-left py-2 px-3 rounded hover:bg-teal-500">Logout</button>
-    </nav>
-  </aside>
+  <!-- Topbar -->
+  <header class="flex items-center justify-between bg-white shadow-md px-4 py-2 fixed inset-x-0 top-0 z-30">
+    <div class="flex items-center space-x-3">
+      <!-- Mobile hamburger -->
+      <button id="mobile-toggle" class="md:hidden p-2 text-gray-700 hover:bg-gray-200 rounded-lg focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <!-- App logo/title -->
+      <h1 class="text-xl font-bold text-teal-600">FLEUR STUDIO</h1>
+    </div>
+    <!-- Admin dropdown -->
+    <div class="relative">
+      <button id="admin-toggle" class="flex items-center space-x-2 focus:outline-none">
+        <img src="assets/worker.gif" alt="Admin" class="w-8 h-8 rounded-full border-2 border-gray-300"/>
+        <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+            clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <div id="admin-menu" class="hidden absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-40">
+        <button id="logout-btn" class="w-full text-left px-4 py-2 hover:bg-gray-100">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <!-- Mobile nav toggle -->
-  <button id="mobile-toggle"
-          class="md:hidden fixed top-4 left-4 z-50 p-2 bg-teal-600 text-white rounded-lg focus:outline-none">
-    <!-- simple hamburger icon -->
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
-         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path stroke-linecap="round" stroke-linejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"></path>
-    </svg>
-  </button>
+  <!-- Layout wrapper (push down for fixed header) -->
+  <div class="flex flex-1 pt-16">
 
-  <!-- Main content -->
-  <main id="app"
-        class="flex-1 ml-0 md:ml-64 p-6 transition-all duration-200">
-    <!-- Konten dinamis akan diinject di sini oleh App.js -->
-  </main>
+    <!-- Sidebar (desktop + mobile) -->
+    <aside id="sidebar"
+           class="hidden md:flex flex-col w-64 bg-teal-600 text-white p-6 pt-16 space-y-8
+                  fixed inset-y-0 left-0 transition-transform duration-200 z-20">
+      <nav class="flex-1 space-y-4">
+        <a href="#dashboard" class="flex items-center py-2 px-3 rounded hover:bg-teal-500">
+          <!-- Home icon -->
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-2 2v7a2 2 0 002 2h-6m-6 0a2 2 0 002-2v-7"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="#clients" class="flex items-center py-2 px-3 rounded hover:bg-teal-500">
+          <!-- Users icon -->
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1m-6 6h6m-6 0a4 4 0 01-4-4v-2a4 4 0 014-4h0a4 4 0 014 4v2a4 4 0 01-4 4m-6-6h.01"/>
+          </svg>
+          Data Klien
+        </a>
+        <a href="#order-list" class="flex items-center py-2 px-3 rounded hover:bg-teal-500">
+          <!-- Clipboard list icon -->
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-2 0V3m-4 2V3m0 0h4m-4 0a2 2 0 00-2 2"/>
+          </svg>
+          Order Masuk
+        </a>
+        <a href="#production-list" class="flex items-center py-2 px-3 rounded hover:bg-teal-500">
+          <!-- Template icon -->
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          Laporan Produksi
+        </a>
+        <a href="#invoice-list" class="flex items-center py-2 px-3 rounded hover:bg-teal-500">
+          <!-- Document text icon -->
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h6m2 0H9a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2v-8a2 2 0 00-2-2z"/>
+          </svg>
+          Invoice
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main id="app"
+          class="flex-1 ml-0 md:ml-64 p-6 overflow-auto transition-all duration-200">
+      <!-- Konten dinamis diinject oleh App.js -->
+    </main>
+
+  </div>
 
   <!-- Dependencies -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- App entrypoint -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script type="module" src="./js/App.js"></script>
 
-  <!-- Mobile sidebar toggle script -->
+  <!-- Sidebar & Admin dropdown & active link script -->
   <script>
-    const btn = document.getElementById('mobile-toggle');
+    // Mobile sidebar toggle
+    const mobileBtn = document.getElementById('mobile-toggle');
     const sidebar = document.getElementById('sidebar');
-    btn.addEventListener('click', () => {
+    mobileBtn.addEventListener('click', () => {
       sidebar.classList.toggle('hidden');
     });
+
+    // Admin dropdown
+    const adminBtn = document.getElementById('admin-toggle');
+    const adminMenu = document.getElementById('admin-menu');
+    adminBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      adminMenu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => {
+      adminMenu.classList.add('hidden');
+    });
+
+    // Highlight active nav link
+    const navLinks = document.querySelectorAll('#sidebar nav a');
+    function setActiveLink() {
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === location.hash) {
+          link.classList.add('bg-teal-500');
+        } else {
+          link.classList.remove('bg-teal-500');
+        }
+      });
+    }
+    window.addEventListener('hashchange', setActiveLink);
+    setActiveLink();
   </script>
 </body>
 </html>

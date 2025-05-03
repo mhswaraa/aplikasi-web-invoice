@@ -1,59 +1,38 @@
 // /js/views/ClientListView.js
 import { ClientService } from '../services/ClientService.js';
+import { AlertService }  from '../services/AlertService.js';
 
 export const ClientListView = {
   render() {
     const app     = document.getElementById('app');
     const clients = ClientService.getAllClients();
 
-    // Bangun baris tabel
     const rows = clients.map((c, i) => `
-      <tr class="even:bg-gray-50">
+      <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
         <td class="px-4 py-2 text-center">${i + 1}</td>
         <td class="px-4 py-2">${c.clientCode}</td>
         <td class="px-4 py-2">${c.name}</td>
         <td class="px-4 py-2">${c.phone || '-'}</td>
         <td class="px-4 py-2">${c.email || '-'}</td>
-        <td class="px-4 py-2 text-center space-x-2">
+        <td class="px-4 py-2 text-center relative">
+          <!-- Toggle button -->
           <button
-            class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm"
+            class="action-toggle px-2 py-1 hover:bg-gray-200 rounded focus:outline-none"
+            aria-label="Toggle actions"
             data-id="${c.id}"
-            title="Edit Klien"
-            aria-label="Edit Klien"
-          >
-            Edit
-          </button>
-          <button
-            class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm"
-            data-id="${c.id}"
-            title="Hapus Klien"
-            aria-label="Hapus Klien"
-          >
-            Hapus
-          </button>
+          >⋮</button>
         </td>
       </tr>
     `).join('');
 
-    // Jika kosong
-    const emptyRow = `
-      <tr>
-        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-          Belum ada klien.
-        </td>
-      </tr>
-    `;
-
     app.innerHTML = `
-      <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
+      <div class="container mx-auto p-6 bg-white shadow-md rounded-lg relative">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-2xl font-semibold text-gray-800">Data Klien</h2>
           <button
             id="add-client"
-            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm"
-          >
-            + Tambah Klien
-          </button>
+            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition"
+          >+ Tambah Klien</button>
         </div>
         <div class="overflow-x-auto">
           <table class="min-w-full table-auto border-collapse">
@@ -68,39 +47,96 @@ export const ClientListView = {
               </tr>
             </thead>
             <tbody>
-              ${rows.length ? rows : emptyRow}
+              ${rows.length ? rows : `
+                <tr>
+                  <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                    Belum ada klien.
+                  </td>
+                </tr>`}
             </tbody>
           </table>
         </div>
+
+        <!-- GLOBAL dropdown container -->
+        <div id="global-action-menu" class="
+          fixed z-50 invisible opacity-0 scale-95 
+          transform transition duration-200 origin-top-right
+          bg-white border rounded shadow-lg overflow-hidden
+        ">
+          <button id="edit-btn"  class="block w-full text-left px-4 py-2 hover:bg-gray-100">Edit</button>
+          <button id="del-btn"   class="block w-full text-left px-4 py-2 hover:bg-gray-100">Hapus</button>
+        </div>
       </div>
     `;
-
     this.afterRender();
   },
 
   afterRender() {
-    // Tambah Klien
-    document
-      .getElementById('add-client')
+    const menu     = document.getElementById('global-action-menu');
+    const editBtn  = document.getElementById('edit-btn');
+    const delBtn   = document.getElementById('del-btn');
+    let currentId  = null;
+
+    // fungsi untuk sembunyikan dropdown
+    const hideMenu = () => {
+      if (!menu.classList.contains('invisible')) {
+        menu.classList.add('invisible','opacity-0','scale-95');
+      }
+    };
+
+    // 1) Toggle dropdown show/hide
+    document.querySelectorAll('.action-toggle').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+
+        currentId = e.currentTarget.dataset.id;
+
+        // hitung ulang posisi berdasarkan bounding terbaru
+        const rect = e.currentTarget.getBoundingClientRect();
+        const top  = rect.bottom + window.scrollY;
+        let   left = rect.right - menu.offsetWidth + window.scrollX;
+
+        // jika melebihi viewport width, geser ke kiri
+        if (left + menu.offsetWidth > window.innerWidth) {
+          left = window.innerWidth - menu.offsetWidth - 8;
+        }
+
+        menu.style.top  = `${top}px`;
+        menu.style.left = `${Math.max(left, 8)}px`;
+
+        // toggle animasi
+        const isHidden = menu.classList.contains('invisible');
+        if (isHidden) {
+          menu.classList.remove('invisible','opacity-0','scale-95');
+        } else {
+          menu.classList.add('invisible','opacity-0','scale-95');
+        }
+      });
+    });
+
+    // 2) Klik luar → hide
+    document.addEventListener('click', hideMenu);
+
+    // 3) Resize window → hide
+    window.addEventListener('resize', hideMenu);
+
+    // 4) Edit & Delete actions
+    editBtn.addEventListener('click', () => {
+      if (!currentId) return;
+      menu.classList.add('invisible','opacity-0','scale-95');
+      location.hash = `#client-form/${currentId}`;
+    });
+    delBtn.addEventListener('click', () => {
+      if (!currentId) return;
+      menu.classList.add('invisible','opacity-0','scale-95');
+      if (!confirm('Yakin ingin menghapus klien ini?')) return;
+      ClientService.deleteClient(currentId);
+      AlertService.show('Data klien berhasil dihapus.', 'success');
+      this.render();
+    });
+
+    // 5) Tombol tambah
+    document.getElementById('add-client')
       .addEventListener('click', () => location.hash = '#client-form');
-
-    // Edit Klien
-    document.querySelectorAll('button[title="Edit Klien"]').forEach(btn =>
-      btn.addEventListener('click', e => {
-        const id = e.currentTarget.dataset.id;
-        location.hash = `#client-form/${id}`;
-      })
-    );
-
-    // Hapus Klien
-    document.querySelectorAll('button[title="Hapus Klien"]').forEach(btn =>
-      btn.addEventListener('click', e => {
-        const id = e.currentTarget.dataset.id;
-        if (!confirm('Yakin ingin menghapus klien ini?')) return;
-        ClientService.deleteClient(id);
-        // Refresh ulang tampilan
-        this.render();
-      })
-    );
   }
 };

@@ -7,9 +7,13 @@ export const LoginView = {
   render() {
     const app = document.getElementById('app');
     app.innerHTML = `
-      <div class="min-h-screen flex items-center justify-center bg-gray-100">
-        <div class="w-full max-w-sm bg-white rounded-2xl shadow-lg p-8">
-          <h2 class="text-2xl font-semibold text-teal-600 mb-6 text-center">Login</h2>
+      <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-teal-100">
+        <div
+          class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 animate-fadeInDown"
+        >
+          <h2 class="text-3xl font-extrabold text-teal-600 mb-6 text-center">
+            Welcome Back
+          </h2>
           <form id="login-form" class="space-y-4">
             <div>
               <label for="username" class="block text-gray-700 mb-1">Username</label>
@@ -18,7 +22,7 @@ export const LoginView = {
                 id="username"
                 name="username"
                 required
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
               />
             </div>
             <div>
@@ -28,13 +32,13 @@ export const LoginView = {
                 id="password"
                 name="password"
                 required
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
               />
             </div>
             <div>
               <button
                 type="submit"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-lg transition"
+                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 rounded-lg shadow-md transform hover:scale-105 transition"
               >
                 Login
               </button>
@@ -64,7 +68,6 @@ export const LoginView = {
       try {
         await AuthService.login(username, password);
         AlertService.show('Berhasil login!', 'success');
-        // redirect to saved hash or dashboard
         const dest = sessionStorage.getItem('redirectHash') || '#dashboard';
         sessionStorage.removeItem('redirectHash');
         location.hash = dest;

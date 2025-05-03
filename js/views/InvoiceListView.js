@@ -1,7 +1,6 @@
-// /js/views/InvoiceListView.js
-
 import { InvoiceService }      from '../services/InvoiceService.js';
 import { ImportExportService } from '../services/ImportExportService.js';
+import { AlertService }        from '../services/AlertService.js';
 
 export const InvoiceListView = {
   render() {
@@ -30,43 +29,34 @@ export const InvoiceListView = {
       return;
     }
 
-    // Bangun baris tabel: nomor, tanggal, buyer, model unik, warna unik, total qty
+    // Bangun baris tabel: nomor, invoice#, tanggal, buyer, model unik, warna unik, total qty
     const rows = invoices.map((inv, i) => {
-      const items = Array.isArray(inv.items) ? inv.items : [];
-      const totalQty = items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
-
-      // daftar model & warna unik
-      const models = [...new Set(items.map(it => it.model).filter(m => m))].join(', ') || '-';
-      const colors = [...new Set(items.map(it => it.color).filter(c => c))].join(', ') || '-';
+      const items    = Array.isArray(inv.items) ? inv.items : [];
+      const totalQty = items.reduce((sum, it) => sum + (Number(it.qty)||0), 0);
+      const models   = [...new Set(items.map(it=>it.model).filter(m=>m))].join(', ') || '-';
+      const colors   = [...new Set(items.map(it=>it.color).filter(c=>c))].join(', ') || '-';
 
       return `
-      <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-        <td class="px-4 py-2 text-center">${i + 1}</td>
-        <td class="px-4 py-2">${inv.number || '-'}</td>
-        <td class="px-4 py-2">${inv.date   || '-'}</td>
-        <td class="px-4 py-2">${inv.buyerName || '-'}</td>
+      <tr class="${i%2===0?'bg-white':'bg-gray-50'}">
+        <td class="px-4 py-2 text-center">${i+1}</td>
+        <td class="px-4 py-2">${inv.number||'-'}</td>
+        <td class="px-4 py-2">${inv.date||'-'}</td>
+        <td class="px-4 py-2">${inv.buyerName||'-'}</td>
         <td class="px-4 py-2">${models}</td>
         <td class="px-4 py-2">${colors}</td>
         <td class="px-4 py-2 text-right">${totalQty}</td>
-        <td class="px-4 py-2 text-center space-x-2">
+        <td class="px-4 py-2 relative">
           <button
-            class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm view-detail"
+            class="action-toggle px-2 py-1 hover:bg-gray-200 rounded focus:outline-none"
+            aria-label="Toggle actions"
             data-id="${inv.id}"
-            title="Lihat Invoice"
-            aria-label="Lihat Invoice"
-          >Lihat</button>
-          <button
-            class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm delete-inv"
-            data-id="${inv.id}"
-            title="Hapus Invoice"
-            aria-label="Hapus Invoice"
-          >Hapus</button>
+          >⋮</button>
         </td>
       </tr>`;
     }).join('');
 
     app.innerHTML = `
-    <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
+    <div class="container mx-auto p-6 bg-white shadow-md rounded-lg relative">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-semibold text-gray-800">Daftar Invoice</h2>
         <div class="space-x-2">
@@ -105,54 +95,88 @@ export const InvoiceListView = {
           </tbody>
         </table>
       </div>
+
+      <!-- GLOBAL action menu -->
+      <div id="inv-action-menu" class="
+        fixed z-50 invisible opacity-0 scale-95
+        transform transition duration-200 origin-top-right
+        bg-white border rounded shadow-lg
+      ">
+        <button id="menu-view"   class="block w-full text-left px-4 py-2 hover:bg-gray-100">Lihat</button>
+        <button id="menu-delete" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Hapus</button>
+      </div>
     </div>`;
 
     this.afterRender();
   },
 
   afterRender() {
-    // Buat invoice baru
+    const menu      = document.getElementById('inv-action-menu');
+    const btnView   = document.getElementById('menu-view');
+    const btnDelete = document.getElementById('menu-delete');
+    const exportBtn = document.getElementById('export-csv');
+    const importInput = document.getElementById('import-csv');
+    let   currentId;
+
+    const hideMenu = () =>
+      menu.classList.add('invisible','opacity-0','scale-95');
+
+    // Toggle dropdown
+    document.querySelectorAll('.action-toggle').forEach(btn =>
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        currentId = e.currentTarget.dataset.id;
+        // position
+        const rect = e.currentTarget.getBoundingClientRect();
+        const top  = rect.bottom + window.scrollY;
+        let   left = rect.right - menu.offsetWidth + window.scrollX;
+        if (left + menu.offsetWidth > window.innerWidth) left = window.innerWidth - menu.offsetWidth - 8;
+        menu.style.top  = `${top}px`;
+        menu.style.left = `${Math.max(left,8)}px`;
+        // show/hide
+        menu.classList.toggle('invisible');
+        menu.classList.toggle('opacity-0');
+        menu.classList.toggle('scale-95');
+      })
+    );
+    document.addEventListener('click', hideMenu);
+    window.addEventListener('resize', hideMenu);
+
+    // View detail
+    btnView.addEventListener('click', () => {
+      hideMenu();
+      location.hash = `#invoice-detail/${currentId}`;
+    });
+
+    // Delete
+    btnDelete.addEventListener('click', () => {
+      hideMenu();
+      if (!confirm('Yakin ingin menghapus invoice ini?')) return;
+      InvoiceService.deleteInvoice(currentId);
+      AlertService.show('Invoice berhasil dihapus.', 'success');
+      this.render();
+    });
+
+    // New invoice
     document.getElementById('back-to-form')
       .addEventListener('click', () => location.hash = '#invoice-form');
 
-    // Lihat detail
-    document.querySelectorAll('button[title="Lihat Invoice"]').forEach(btn =>
-      btn.addEventListener('click', e =>
-        location.hash = `#invoice-detail/${e.currentTarget.dataset.id}`
-      )
-    );
-
-    // Hapus invoice
-    document.querySelectorAll('button[title="Hapus Invoice"]').forEach(btn =>
-      btn.addEventListener('click', e => {
-        const id = e.currentTarget.dataset.id;
-        if (!confirm('Yakin ingin menghapus invoice ini?')) return;
-        InvoiceService.deleteInvoice(id);
-        this.render();
-      })
-    );
-
     // Export CSV
-    document.getElementById('export-csv')
-      .addEventListener('click', () => ImportExportService.exportCSV('invoices'));
+    exportBtn.addEventListener('click', () => ImportExportService.exportCSV('invoices'));
 
-    // Trigger import CSV
-    const importInput = document.getElementById('import-csv');
+    // Import CSV
     document.getElementById('trigger-import-csv')
       .addEventListener('click', () => importInput.click());
-
-    // Handle file import
     importInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       ImportExportService.importCSV('invoices', file, (count, err) => {
-        if (err) alert('Import gagal: ' + err.message);
+        if (err) AlertService.show(`Import gagal: ${err.message}`, 'error');
         else {
-          alert(`Berhasil import ${count} invoice`);
+          AlertService.show(`Berhasil import ${count} invoice.`, 'success');
           this.render();
         }
       });
-      importInput.value = '';
+      importInput.value='';
     });
   }
 };

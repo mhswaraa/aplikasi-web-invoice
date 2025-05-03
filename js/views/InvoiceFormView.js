@@ -1,4 +1,6 @@
-// /js/views/InvoiceFormView.js
+// ─────────────────────────────────────────────────────────────────────────────
+// InvoiceFormView (lokasi: /js/views/InvoiceFormView.js)
+// ─────────────────────────────────────────────────────────────────────────────
 
 import { InvoiceService }    from '../services/InvoiceService.js';
 import { ProductionService } from '../services/ProductionService.js';
@@ -14,48 +16,52 @@ export const InvoiceFormView = {
     const params    = new URLSearchParams(query);
     const prodId    = params.get('productionId');
 
-    // default
+    // default values
     let buyerName   = '';
     let packageType = '';
     let modelName   = '';
-    let initialItems = [{
-      name:   '',
-      model:  '',
-      size:   '',
-      color:  '',
-      qty:    1,
-      defect: 0,
-      price:  0
-    }];
+    let initialItems = [{ name:'', model:'', size:'', color:'', qty:1, defect:0, price:0 }];
 
+    // jika ada prodId, cari data produksi
     if (prodId) {
       const prod = ProductionService.getProduction(prodId);
-      if (prod) {
-        const ord = OrderService.getOrder(prod.orderId) || {};
-        buyerName   = prod.clientName;
-        packageType = ord.package || '';
-        modelName   = ord.model   || '';
+      if (!prod) {
+        app.innerHTML = `
+          <div class="container mx-auto p-6 bg-white shadow-md rounded-lg text-center">
+            <p class="text-red-500 mb-4">Produksi ID "${prodId}" tidak ditemukan.</p>
+            <button id="back-cancel" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">Kembali</button>
+          </div>`;
+        // Tampilkan alert error dan pasang handler
+        setTimeout(() => {
+          AlertService.show(`Produksi dengan ID ${prodId} tidak ditemukan.`, 'error');
+          document.getElementById('back-cancel')
+            .addEventListener('click', () => location.hash = '#invoice-list');
+        }, 0);
+        return;
+      }
+      // jika ditemukan, bangun data awal
+      const ord = OrderService.getOrder(prod.orderId) || {};
+      buyerName   = prod.clientName;
+      packageType = ord.package || '';
+      modelName   = ord.model   || '';
 
-        initialItems = prod.items
-          .map(it => ({
-            name:   ord.orderCode || '',
-            model:  ord.model     || '',
-            size:   it.size       || '',
-            color:  it.color || (ord.items || []).find(o => o.size===it.size)?.color || '',
-            qty:    Math.max(0, it.qtyJadi - it.defect),
-            defect: it.defect     || 0,
-            price:  it.price != null
+      initialItems = prod.items
+        .map(it => ({
+          name:   ord.orderCode || '',
+          model:  ord.model     || '',
+          size:   it.size       || '',
+          color:  it.color || (ord.items||[]).find(o=>o.size===it.size)?.color || '',
+          qty:    Math.max(0, it.qtyJadi - it.defect),
+          defect: it.defect     || 0,
+          price:  it.price != null
                     ? it.price
                     : (ord.items||[]).find(o=>o.size===it.size)?.price || 0
-          }))
-          .filter(it => it.qty > 0);
-      }
+        }))
+        .filter(it => it.qty > 0);
     }
 
     // build rows
-    const rowsHTML = initialItems
-      .map((it, i) => this._genRow(i+1, it))
-      .join('');
+    const rowsHTML = initialItems.map((it, i) => this._genRow(i+1, it)).join('');
 
     app.innerHTML = `
       <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
@@ -66,34 +72,15 @@ export const InvoiceFormView = {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block mb-1 font-medium text-gray-700">Nama Klien</label>
-              <input
-                type="text"
-                name="buyerName"
-                value="${buyerName}"
-                readonly
-                required
-                class="w-full px-3 py-2 border rounded"
-              />
+              <input type="text" name="buyerName" value="${buyerName}" readonly required class="w-full px-3 py-2 border rounded" />
             </div>
             <div>
               <label class="block mb-1 font-medium text-gray-700">Paket Produksi</label>
-              <input
-                type="text"
-                name="packageType"
-                value="${packageType}"
-                readonly
-                class="w-full px-3 py-2 border rounded"
-              />
+              <input type="text" name="packageType" value="${packageType}" readonly class="w-full px-3 py-2 border rounded" />
             </div>
             <div>
               <label class="block mb-1 font-medium text-gray-700">Model</label>
-              <input
-                type="text"
-                name="modelName"
-                value="${modelName}"
-                readonly
-                class="w-full px-3 py-2 border rounded"
-              />
+              <input type="text" name="modelName" value="${modelName}" readonly class="w-full px-3 py-2 border rounded" />
             </div>
           </div>
 
@@ -112,44 +99,20 @@ export const InvoiceFormView = {
                   <th class="px-4 py-2 text-center text-gray-600">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="item-rows">
-                ${rowsHTML}
-              </tbody>
+              <tbody id="item-rows">${rowsHTML}</tbody>
             </table>
           </div>
 
-          <button
-            type="button"
-            id="add-row-btn"
-            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
-          >+ Tambah Item</button>
+          <button type="button" id="add-row-btn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg">+ Tambah Item</button>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <label class="block mb-1 font-medium text-gray-700" for="taxPercent">
-                Tax (%)
-              </label>
-              <input
-                type="number"
-                id="taxPercent"
-                name="taxPercent"
-                min="0"
-                value="0"
-                class="w-full px-3 py-2 border rounded text-right"
-              />
+              <label class="block mb-1 font-medium text-gray-700" for="taxPercent">Tax (%)</label>
+              <input type="number" id="taxPercent" name="taxPercent" min="0" value="0" class="w-full px-3 py-2 border rounded text-right" />
             </div>
             <div>
-              <label class="block mb-1 font-medium text-gray-700" for="discountPercent">
-                Discount (%)
-              </label>
-              <input
-                type="number"
-                id="discountPercent"
-                name="discountPercent"
-                min="0"
-                value="0"
-                class="w-full px-3 py-2 border rounded text-right"
-              />
+              <label class="block mb-1 font-medium text-gray-700" for="discountPercent">Discount (%)</label>
+              <input type="number" id="discountPercent" name="discountPercent" min="0" value="0" class="w-full px-3 py-2 border rounded text-right" />
             </div>
           </div>
 
@@ -161,19 +124,11 @@ export const InvoiceFormView = {
           </div>
 
           <div class="flex flex-wrap gap-4">
-            <button
-              type="submit"
-              class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-            >Terbitkan Invoice</button>
-            <button
-              type="button"
-              id="to-list"
-              class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
-            >Daftar Invoice</button>
+            <button type="submit" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">Terbitkan Invoice</button>
+            <button type="button" id="to-list" class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">Daftar Invoice</button>
           </div>
         </form>
-      </div>
-    `;
+      </div>`;
 
     this.afterRender();
   },
@@ -209,23 +164,17 @@ export const InvoiceFormView = {
       sumTot.textContent  = total.toLocaleString();
     };
 
-    // tambah baris
     addBtn.addEventListener('click', () => {
       rowCount++;
-      rowsBody.insertAdjacentHTML('beforeend',
-        this._genRow(rowCount, {
-          name:'', model:'', size:'', color:'', qty:1, defect:0, price:0
-        })
-      );
+      rowsBody.insertAdjacentHTML('beforeend', this._genRow(rowCount, { name:'', model:'', size:'', color:'', qty:1, defect:0, price:0 }));
     });
 
-    // hapus baris
     rowsBody.addEventListener('click', e => {
       if (!e.target.classList.contains('delete-row-btn')) return;
       e.target.closest('tr').remove();
       Array.from(rowsBody.children).forEach((tr, idx) => {
-        tr.dataset.index = idx + 1;
-        tr.cells[0].textContent = idx + 1;
+        tr.dataset.index = idx+1;
+        tr.cells[0].textContent = idx+1;
       });
       rowCount = rowsBody.children.length;
       recalc();
@@ -255,93 +204,32 @@ export const InvoiceFormView = {
         discountPercent: parseFloat(form.discountPercent.value) || 0
       });
 
+      // alert sukses
       AlertService.show('Invoice berhasil diterbitkan.', 'success');
       location.hash = `#invoice-detail/${inv.id}`;
     });
 
     document.getElementById('to-list')
-      .addEventListener('click', () => location.hash = '#invoice-list');
+      .addEventListener('click', () => {
+        AlertService.show('Pembuatan invoice dibatalkan.', 'info');
+        location.hash = '#invoice-list';
+      });
 
     recalc();
   },
 
   _genRow(i, it) {
     return `
-      <tr class="${i % 2 === 1 ? 'bg-white' : 'bg-gray-50'}" data-index="${i}">
+      <tr class="${i%2===1?'bg-white':'bg-gray-50'}" data-index="${i}">
         <td class="px-4 py-2 text-center">${i}</td>
-        <td class="px-4 py-2">
-          <input
-            name="productName"
-            type="text"
-            value="${it.name||''}"
-            readonly
-            required
-            class="w-full px-2 py-1 border rounded"
-          />
-        </td>
-        <td class="px-4 py-2">
-          <input
-            name="productModel"
-            type="text"
-            value="${it.model||''}"
-            readonly
-            class="w-full px-2 py-1 border rounded"
-          />
-        </td>
-        <td class="px-4 py-2">
-          <input
-            name="productSize"
-            type="text"
-            value="${it.size||''}"
-            readonly
-            required
-            class="w-full px-2 py-1 border rounded"
-          />
-        </td>
-        <td class="px-4 py-2">
-          <input
-            name="productColor"
-            type="text"
-            value="${it.color||''}"
-            readonly
-            class="w-full px-2 py-1 border rounded"
-          />
-        </td>
-        <td class="px-4 py-2">
-          <input
-            name="productQty"
-            type="number"
-            min="0"
-            value="${it.qty||0}"
-            required
-            class="w-20 px-2 py-1 border rounded text-right"
-          />
-        </td>
-        <td class="px-4 py-2">
-          <input
-            name="productDefect"
-            type="number"
-            value="${it.defect||0}"
-            readonly
-            class="w-20 px-2 py-1 border rounded text-right"
-          />
-        </td>
-        <td class="px-4 py-2">
-          <input
-            name="productPrice"
-            type="number"
-            min="0"
-            value="${it.price||0}"
-            required
-            class="w-24 px-2 py-1 border rounded text-right"
-          />
-        </td>
-        <td class="px-4 py-2 text-center">
-          <button
-            type="button"
-            class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm delete-row-btn"
-          >Hapus</button>
-        </td>
+        <td class="px-4 py-2"><input name="productName" type="text" value="${it.name||''}" readonly required class="w-full px-2 py-1 border rounded"/></td>
+        <td class="px-4 py-2"><input name="productModel" type="text" value="${it.model||''}" readonly class="w-full px-2 py-1 border rounded"/></td>
+        <td class="px-4 py-2"><input name="productSize" type="text" value="${it.size||''}" readonly required class="w-full px-2 py-1 border rounded"/></td>
+        <td class="px-4 py-2"><input name="productColor" type="text" value="${it.color||''}" readonly class="w-full px-2 py-1.border rounded"/></td>
+        <td class="px-4 py-2"><input name="productQty" type="number" min="0" value="${it.qty||0}" required class="w-20 px-2 py-1 border rounded text-right"/></td>
+        <td class="px-4 py-2"><input name="productDefect" type="number" value="${it.defect||0}" readonly class="w-20 px-2 py-1 border rounded text-right"/></td>
+        <td class="px-4 py-2"><input name="productPrice" type="number" min="0" value="${it.price||0}" required class="w-24 px-2 py-1 border rounded text-right"/></td>
+        <td class="px-4 py-2 text-center"><button type="button" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm delete-row-btn">Hapus</button></td>
       </tr>
     `;
   }

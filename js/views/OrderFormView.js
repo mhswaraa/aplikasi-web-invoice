@@ -1,10 +1,11 @@
 // /js/views/OrderFormView.js
 import { OrderService }  from '../services/OrderService.js';
 import { ClientService } from '../services/ClientService.js';
+import { AlertService }  from '../services/AlertService.js';
 
 export const OrderFormView = {
   render() {
-    const [ , orderId ] = location.hash.split('/');
+    const [, orderId] = location.hash.split('/');
     const today = new Date().toISOString().slice(0,10);
     const data = orderId
       ? OrderService.getOrder(orderId)
@@ -22,16 +23,26 @@ export const OrderFormView = {
     const rowsHTML = (data.items || []).map((it, idx) => `
       <tr data-index="${idx+1}" class="border-b">
         <td class="px-2 py-1 text-center">${idx+1}</td>
-        <td class="px-2 py-1"><input name="size" value="${it.size}" required
-             class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/></td>
-        <td class="px-2 py-1"><input name="color" value="${it.color||''}" placeholder="Warna" required
-             class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/></td>
-        <td class="px-2 py-1"><input name="qtyFabric" type="number" min="1" value="${it.qtyFabric}" required
-             class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/></td>
-        <td class="px-2 py-1"><input name="price" type="number" min="0" value="${it.price}" required
-             class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/></td>
+        <td class="px-2 py-1">
+          <input name="size" value="${it.size}" required
+            class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/>
+        </td>
+        <td class="px-2 py-1">
+          <input name="color" value="${it.color||''}" placeholder="Warna" required
+            class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/>
+        </td>
+        <td class="px-2 py-1">
+          <input name="qtyFabric" type="number" min="1" value="${it.qtyFabric}" required
+            class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/>
+        </td>
+        <td class="px-2 py-1">
+          <input name="price" type="number" min="0" value="${it.price}" required
+            class="w-full border rounded px-2 py-1 focus:ring focus:ring-teal-200"/>
+        </td>
         <td class="px-2 py-1 text-center">
-          <button type="button" class="text-red-500 hover:text-red-700 delete-row-btn">Hapus</button>
+          <button type="button" class="text-red-500 hover:text-red-700 delete-row-btn">
+            Hapus
+          </button>
         </td>
       </tr>
     `).join('');
@@ -75,7 +86,7 @@ export const OrderFormView = {
               <input type="date" id="orderDate" name="orderDate" value="${data.orderDate||today}" required
                 class="w-full border rounded px-3 py-2 focus:ring focus:ring-teal-200"/>
             </div>
-          </div><!-- grid -->
+          </div>
 
           <div class="overflow-x-auto">
             <table class="w-full table-auto mb-4">
@@ -133,11 +144,13 @@ export const OrderFormView = {
     const tbody        = document.getElementById('order-items');
     let rowCount       = tbody.children.length;
 
+    // update kode klien
     clientSelect.addEventListener('change', () => {
       const c = ClientService.getClient(clientSelect.value);
       codeInput.value = c ? c.clientCode : '';
     });
 
+    // tambah baris
     document.getElementById('add-row-btn')
       .addEventListener('click', () => {
         rowCount++;
@@ -162,9 +175,12 @@ export const OrderFormView = {
         tbody.appendChild(tr);
       });
 
+    // hapus baris & alert
     tbody.addEventListener('click', e => {
       if (!e.target.classList.contains('delete-row-btn')) return;
       e.target.closest('tr').remove();
+      AlertService.show('Baris berhasil dihapus.', 'success');
+      // re-index
       Array.from(tbody.children).forEach((tr, idx) => {
         tr.dataset.index = idx+1;
         tr.cells[0].textContent = idx+1;
@@ -172,36 +188,42 @@ export const OrderFormView = {
       rowCount = tbody.children.length;
     });
 
+    // submit form & alert
     form.addEventListener('submit', e => {
       e.preventDefault();
       const items = Array.from(tbody.children).map(tr => ({
-        size: tr.querySelector('input[name="size"]').value.trim(),
-        color: tr.querySelector('input[name="color"]').value.trim(),
-        qtyFabric: Number(tr.querySelector('input[name="qtyFabric"]').value),
-        price: Number(tr.querySelector('input[name="price"]').value)
+        size:       tr.querySelector('input[name="size"]').value.trim(),
+        color:      tr.querySelector('input[name="color"]').value.trim(),
+        qtyFabric:  Number(tr.querySelector('input[name="qtyFabric"]').value),
+        price:      Number(tr.querySelector('input[name="price"]').value),
       }));
 
       const existing = OrderService.getOrder(orderId) || {};
       const orderObj = {
-        id: orderId,
-        orderCode: existing.orderCode,
-        createdAt: existing.createdAt,
-        clientId: clientSelect.value,
+        id:         orderId,
+        orderCode:  existing.orderCode,
+        createdAt:  existing.createdAt,
+        clientId:   clientSelect.value,
         clientName: clientSelect.options[clientSelect.selectedIndex].text,
         clientCode: codeInput.value,
-        package: document.getElementById('package').value,
-        model: document.getElementById('model').value.trim(),
-        orderDate: document.getElementById('orderDate').value,
+        package:    document.getElementById('package').value,
+        model:      document.getElementById('model').value.trim(),
+        orderDate:  document.getElementById('orderDate').value,
         items,
-        notes: document.getElementById('notes').value.trim(),
-        status: existing.status
+        notes:      document.getElementById('notes').value.trim(),
+        status:     existing.status
       };
 
       OrderService.saveOrder(orderObj);
+      AlertService.show(`Order ${orderObj.orderCode} berhasil disimpan.`, 'success');
       location.hash = '#order-list';
     });
 
+    // batal
     document.getElementById('cancel-btn')
-      .addEventListener('click', () => location.hash = '#order-list');
+      .addEventListener('click', () => {
+        AlertService.show('Pembatalan, kembali ke daftar order.', 'info');
+        location.hash = '#order-list';
+      });
   }
 };

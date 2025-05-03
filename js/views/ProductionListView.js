@@ -1,28 +1,25 @@
-// /js/views/ProductionListView.js
 import { ProductionService } from '../services/ProductionService.js';
+import { AlertService }      from '../services/AlertService.js';
 
 export const ProductionListView = {
   render() {
     const app   = document.getElementById('app');
     const prods = ProductionService.getAllProductions();
 
-    // Bangun baris tabel dengan Tailwind
+    // Build table rows
     const rows = prods.map((p, i) => {
       const totalJadi   = p.items.reduce((sum, it) => sum + (it.qtyJadi || 0), 0);
       const totalDefect = p.items.reduce((sum, it) => sum + (it.defect  || 0), 0);
-
-      // Tgl order
       const orderDate = p.orderDate
         ? new Date(p.orderDate).toLocaleDateString('id-ID')
         : '-';
-      // Gabungkan warna unik
       const colors = Array.isArray(p.items)
         ? [...new Set(p.items.map(it => it.color || '-'))].join(', ')
         : '-';
 
       return `
         <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-          <td class="px-4 py-2 text-center">${i + 1}</td>
+          <td class="px-4 py-2 text-center">${i+1}</td>
           <td class="px-4 py-2">${orderDate}</td>
           <td class="px-4 py-2">${p.model || '-'}</td>
           <td class="px-4 py-2">${colors}</td>
@@ -31,19 +28,12 @@ export const ProductionListView = {
           <td class="px-4 py-2">${new Date(p.createdAt).toLocaleDateString('id-ID')}</td>
           <td class="px-4 py-2 text-right">${totalJadi}</td>
           <td class="px-4 py-2 text-right">${totalDefect}</td>
-          <td class="px-4 py-2 text-center space-x-2">
+          <td class="px-4 py-2 relative">
             <button
-              class="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm edit-prod"
+              class="action-toggle px-2 py-1 hover:bg-gray-200 rounded focus:outline-none"
+              aria-label="Toggle actions"
               data-id="${p.id}"
-              title="Edit Produksi"
-              aria-label="Edit Produksi"
-            >Edit</button>
-            <button
-              class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm delete-prod"
-              data-id="${p.id}"
-              title="Hapus Produksi"
-              aria-label="Hapus Produksi"
-            >Hapus</button>
+            >⋮</button>
           </td>
         </tr>`;
     }).join('');
@@ -56,7 +46,7 @@ export const ProductionListView = {
       </tr>`;
 
     app.innerHTML = `
-      <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
+      <div class="container mx-auto p-6 bg-white shadow-md rounded-lg relative">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-2xl font-semibold text-gray-800">Laporan Produksi</h2>
         </div>
@@ -81,6 +71,16 @@ export const ProductionListView = {
             </tbody>
           </table>
         </div>
+
+        <!-- GLOBAL action menu -->
+        <div id="prod-action-menu" class="
+          fixed z-50 invisible opacity-0 scale-95
+          transform transition duration-200 origin-top-right
+          bg-white border rounded shadow-lg
+        ">
+          <button id="menu-edit"   class="block w-full text-left px-4 py-2 hover:bg-gray-100">Edit</button>
+          <button id="menu-delete" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Hapus</button>
+        </div>
       </div>
     `;
 
@@ -88,21 +88,51 @@ export const ProductionListView = {
   },
 
   afterRender() {
-    // Edit Produksi
-    document.querySelectorAll('button[title="Edit Produksi"]').forEach(btn =>
+    const menu      = document.getElementById('prod-action-menu');
+    const btnEdit   = document.getElementById('menu-edit');
+    const btnDelete = document.getElementById('menu-delete');
+    let   currentId;
+
+    const hideMenu = () =>
+      menu.classList.add('invisible','opacity-0','scale-95');
+
+    // Toggle dropdown
+    document.querySelectorAll('.action-toggle').forEach(btn =>
       btn.addEventListener('click', e => {
-        const id = e.currentTarget.dataset.id;
-        location.hash = `#production-form/${id}`;
+        e.stopPropagation();
+        currentId = e.currentTarget.dataset.id;
+
+        // position the menu under button
+        const rect = e.currentTarget.getBoundingClientRect();
+        const top  = rect.bottom + window.scrollY;
+        let   left = rect.right - menu.offsetWidth + window.scrollX;
+        if (left + menu.offsetWidth > window.innerWidth) {
+          left = window.innerWidth - menu.offsetWidth - 8;
+        }
+        menu.style.top  = `${top}px`;
+        menu.style.left = `${Math.max(left,8)}px`;
+
+        // show/hide
+        menu.classList.toggle('invisible');
+        menu.classList.toggle('opacity-0');
+        menu.classList.toggle('scale-95');
       })
     );
-    // Hapus Produksi
-    document.querySelectorAll('button[title="Hapus Produksi"]').forEach(btn =>
-      btn.addEventListener('click', e => {
-        const id = e.currentTarget.dataset.id;
-        if (!confirm('Yakin hapus laporan produksi ini?')) return;
-        ProductionService.deleteProduction(id);
-        this.render();
-      })
-    );
+
+    document.addEventListener('click', hideMenu);
+    window.addEventListener('resize', hideMenu);
+
+    // Action handlers
+    btnEdit.addEventListener('click', () => {
+      hideMenu();
+      location.hash = `#production-form/${currentId}`;
+    });
+    btnDelete.addEventListener('click', () => {
+      hideMenu();
+      if (!confirm('Yakin hapus laporan produksi ini?')) return;
+      ProductionService.deleteProduction(currentId);
+      AlertService.show('Laporan produksi berhasil dihapus.', 'success');
+      this.render();
+    });
   }
-};
+}; 

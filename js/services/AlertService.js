@@ -1,35 +1,24 @@
 // /js/services/AlertService.js
-
 export const AlertService = {
-    /**
-     * Tampilkan toast notifikasi
-     * @param {string} message  – teks pesan
-     * @param {'success'|'error'|'info'} type
-     * @param {number} duration – ms sebelum auto-hide
-     */
-    show(message, type = 'info', duration = 3000) {
-      // Buat container jika belum ada
-      let container = document.querySelector('.alert-container');
-      if (!container) {
-        container = document.createElement('div');
-        container.className = 'alert-container';
-        document.body.appendChild(container);
+  show(message, type = 'info') {
+    const icons = {
+      success: 'success',
+      error:   'error',
+      warning: 'warning',
+      info:    'info'
+    };
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: icons[type] || 'info',
+      title: message,
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
       }
-      // Buat toast
-      const toast = document.createElement('div');
-      toast.className = `toast toast--${type}`;
-      toast.textContent = message;
-      container.appendChild(toast);
-  
-      // Muncul + auto-hide
-      setTimeout(() => toast.classList.add('show'), 50);
-      setTimeout(() => {
-        toast.classList.remove('show');
-        toast.addEventListener('transitionend', () => toast.remove());
-      }, duration);
-    }
-  };
-  
-  // Expose untuk kemudahan panggil dari console/JS lain
-  window.AlertService = AlertService;
-  
+    });
+  }
+};

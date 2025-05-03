@@ -113,7 +113,7 @@ const nowString = new Date().toLocaleString('id-ID', {
           ${inv.buyerAddress?`
           <tr><td><strong>Alamat:</strong></td><td>${inv.buyerAddress}</td></tr>`:''}
         </table>
-
+        <br>
         <!-- ITEMS -->
         <table class="pdf-table">
           <thead>

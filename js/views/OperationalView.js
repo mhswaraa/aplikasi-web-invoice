@@ -9,73 +9,122 @@ export const OperationalView = {
     const [, invoiceId] = location.hash.split('/');
     const inv = InvoiceService.getInvoice(invoiceId);
     if (!inv) {
-      app.innerHTML = `<p>Invoice "${invoiceId}" tidak ditemukan.</p>`;
+      app.innerHTML = `
+        <div class="container mx-auto p-6">
+          <p class="text-red-600">Invoice "${invoiceId}" tidak ditemukan.</p>
+        </div>
+      `;
       return;
     }
 
-    // Ambil list operasi
+    // Ambil data operasional
     const ops = OperationService.getByInvoice(invoiceId);
-    const rows = ops.map((op,i) => `
-      <tr>
-        <td>${i+1}</td>
-        <td>${op.itemName}</td>
-        <td class="text-right">${op.qty}</td>
-        <td class="text-right">${op.unitCost.toLocaleString()}</td>
-        <td class="text-right">${op.totalCost.toLocaleString()}</td>
-        <td>
-          <button class="btn delete-op" data-id="${op.id}">Hapus</button>
+    const rowsHTML = ops.map((op, i) => `
+      <tr class="${i % 2 === 0 ? 'bg-gray-50' : ''}">
+        <td class="px-4 py-2 text-center">${i + 1}</td>
+        <td class="px-4 py-2">${op.itemName}</td>
+        <td class="px-4 py-2 text-right">${op.qty}</td>
+        <td class="px-4 py-2 text-right">${op.unitCost.toLocaleString()}</td>
+        <td class="px-4 py-2 text-right">${op.totalCost.toLocaleString()}</td>
+        <td class="px-4 py-2 text-center">
+          <button
+            class="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm"
+            data-id="${op.id}"
+            title="Hapus Operasional"
+          >
+            Hapus
+          </button>
         </td>
       </tr>
     `).join('');
 
-    app.innerHTML = `
-      <div class="operation-container">
-        <h2>Operasional Invoice ${inv.number}</h2>
+    const emptyRow = `
+      <tr>
+        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+          Belum ada operasional.
+        </td>
+      </tr>
+    `;
 
-        <!-- Form tambah item -->
-        <form id="op-form">
-          <div class="form-group">
-            <label for="itemName">Nama Item Operasional</label>
-            <input type="text" id="itemName" name="itemName" required />
+    app.innerHTML = `
+      <div class="container mx-auto p-6 bg-white shadow rounded-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-semibold text-gray-800">
+            Operasional Invoice ${inv.number}
+          </h2>
+          <button
+            id="back-inv"
+            class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm"
+          >
+            ← Kembali ke Invoice
+          </button>
+        </div>
+
+        <!-- Form Tambah Item -->
+        <form id="op-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="md:col-span-1">
+            <label for="itemName" class="block text-gray-700 mb-1">Nama Item</label>
+            <input
+              type="text" id="itemName" name="itemName"
+              class="w-full border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              required
+            />
           </div>
-          <div class="form-group-inline">
-            <div class="form-group-small">
-              <label for="qty">Qty</label>
-              <input type="number" id="qty" name="qty" min="1" value="1" required />
-            </div>
-            <div class="form-group-small">
-              <label for="unitCost">Unit Cost</label>
-              <input type="number" id="unitCost" name="unitCost" min="0" value="0" required />
-            </div>
+          <div class="md:col-span-1">
+            <label for="qty" class="block text-gray-700 mb-1">Qty</label>
+            <input
+              type="number" id="qty" name="qty" min="1" value="1"
+              class="w-full border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              required
+            />
           </div>
-          <button type="submit" class="btn">Tambah Operasional</button>
-          <button type="button" id="back-inv" class="btn">Kembali ke Invoice</button>
+          <div class="md:col-span-1">
+            <label for="unitCost" class="block text-gray-700 mb-1">Unit Cost</label>
+            <input
+              type="number" id="unitCost" name="unitCost" min="0" value="0"
+              class="w-full border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div class="md:col-span-3 flex space-x-2 mt-2">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm"
+            >
+              + Tambah Operasional
+            </button>
+          </div>
         </form>
 
-        <!-- Tabel list operasi -->
-        <table class="item-table">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Item</th>
-              <th>Qty</th>
-              <th>Unit Cost</th>
-              <th>Total Cost</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows || `
-              <tr>
-                <td colspan="6" style="text-align:center">Belum ada operasional.</td>
-              </tr>`}
-          </tbody>
-        </table>
+        <!-- Tabel Operasional -->
+        <div class="overflow-x-auto mb-6">
+          <table class="min-w-full table-auto border-collapse">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="px-4 py-2 text-left text-gray-600">No</th>
+                <th class="px-4 py-2 text-left text-gray-600">Item</th>
+                <th class="px-4 py-2 text-right text-gray-600">Qty</th>
+                <th class="px-4 py-2 text-right text-gray-600">Unit Cost</th>
+                <th class="px-4 py-2 text-right text-gray-600">Total Cost</th>
+                <th class="px-4 py-2 text-center text-gray-600">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ops.length ? rowsHTML : emptyRow}
+            </tbody>
+          </table>
+        </div>
 
         <!-- Ringkasan Keuangan -->
-        <div class="form-summary" style="margin-top:1.5rem;">
-          <div>Total Operasional: <strong id="total-ops">0</strong></div>
-          <div>Sisa dari Invoice: <strong id="remaining-income">0</strong></div>
+        <div class="bg-gray-50 p-4 rounded-lg flex justify-end space-x-8">
+          <div>
+            <div class="text-gray-700">Total Operasional</div>
+            <div id="total-ops" class="text-xl font-semibold text-right">0</div>
+          </div>
+          <div>
+            <div class="text-gray-700">Sisa dari Invoice</div>
+            <div id="remaining-income" class="text-xl font-semibold text-right">0</div>
+          </div>
         </div>
       </div>
     `;
@@ -85,22 +134,21 @@ export const OperationalView = {
 
   afterRender(invoiceId) {
     // Submit form
-    document.getElementById('op-form')
-      .addEventListener('submit', e => {
-        e.preventDefault();
-        const f = e.target;
-        OperationService.addOperation({
-          invoiceId,
-          itemName: f.itemName.value.trim(),
-          qty:      Number(f.qty.value),
-          unitCost: Number(f.unitCost.value)
-        });
-        AlertService.show('Item operasional ditambahkan', 'success');
-        this.render();
+    document.getElementById('op-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const f = e.target;
+      OperationService.addOperation({
+        invoiceId,
+        itemName: f.itemName.value.trim(),
+        qty:      Number(f.qty.value),
+        unitCost: Number(f.unitCost.value)
       });
+      AlertService.show('Item operasional ditambahkan', 'success');
+      this.render();
+    });
 
     // Hapus operasional
-    document.querySelectorAll('.delete-op').forEach(btn =>
+    document.querySelectorAll('button[title="Hapus Operasional"]').forEach(btn =>
       btn.addEventListener('click', e => {
         const id = e.currentTarget.dataset.id;
         if (!confirm('Hapus item operasional ini?')) return;
@@ -110,18 +158,17 @@ export const OperationalView = {
     );
 
     // Kembali ke invoice
-    document.getElementById('back-inv')
-      .addEventListener('click', () => {
-        location.hash = `#invoice-detail/${invoiceId}`;
-      });
+    document.getElementById('back-inv').addEventListener('click', () => {
+      location.hash = `#invoice-detail/${invoiceId}`;
+    });
 
-    // Hitung dan tampilkan ringkasan keuangan
+    // Hitung ringkasan
     const inv  = InvoiceService.getInvoice(invoiceId);
     const ops  = OperationService.getByInvoice(invoiceId);
     const sumOps = ops.reduce((s, op) => s + op.totalCost, 0);
     const remaining = (inv.total || 0) - sumOps;
 
-    document.getElementById('total-ops').textContent       = sumOps.toLocaleString();
+    document.getElementById('total-ops').textContent        = sumOps.toLocaleString();
     document.getElementById('remaining-income').textContent = remaining.toLocaleString();
   }
 };
