@@ -95,7 +95,7 @@ export const OrderFormView = {
                   <th class="px-2 py-2">No</th>
                   <th class="px-2 py-2">Size</th>
                   <th class="px-2 py-2">Warna</th>
-                  <th class="px-2 py-2">Qty</th>
+                  <th class="px-2 py-2">Qty Yd</th>
                   <th class="px-2 py-2">Price/pcs</th>
                   <th class="px-2 py-2">Aksi</th>
                 </tr>

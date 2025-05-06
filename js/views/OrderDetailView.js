@@ -1,5 +1,8 @@
 // /js/views/OrderDetailView.js
-import { OrderService } from '../services/OrderService.js';
+
+import { OrderService }      from '../services/OrderService.js';
+import { ProductionService } from '../services/ProductionService.js';
+import { AlertService }      from '../services/AlertService.js';
 
 export const OrderDetailView = {
   render() {
@@ -55,15 +58,16 @@ export const OrderDetailView = {
           <div class="space-x-2">
             <button
               id="back-btn"
-              class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm"
-            >
+              type="button"
+              class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm">
               ← Kembali ke List
             </button>
+            <!-- TOMBOL PRODUKSI / SELESAI -->
             <button
-              id="to-production"
-              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm"
-            >
-              Buat Produksi
+              id="production-btn"
+              type="button"
+              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm">
+              <!-- label akan di‑set di afterRender() -->
             </button>
           </div>
         </div>
@@ -75,7 +79,7 @@ export const OrderDetailView = {
           <div><strong>Paket:</strong> ${o.package}</div>
           <div><strong>Model:</strong> ${o.model}</div>
           <div><strong>Warna:</strong> ${o.items.map(it => it.color || '-').join(', ')}</div>
-          <div><strong>Status:</strong> ${o.status}</div>
+          <div><strong>Status:</strong> <span id="status-label">${o.status}</span></div>
           <div><strong>Deskripsi:</strong> ${o.notes || '-'}</div>
         </div>
 
@@ -114,9 +118,56 @@ export const OrderDetailView = {
   },
 
   afterRender(id) {
-    document.getElementById('back-btn')
-      .addEventListener('click', () => location.hash = '#order-list');
-    document.getElementById('to-production')
-      .addEventListener('click', () => location.hash = `#production-form/${id}`);
+    const backBtn  = document.getElementById('back-btn');
+    const prodBtn  = document.getElementById('production-btn');
+    const statusEl = document.getElementById('status-label');
+
+    // Kembali ke daftar order
+    backBtn.addEventListener('click', () => location.hash = '#order-list');
+
+    // Cek entri produksi terkait order ini
+    const existingProd = ProductionService
+      .getAllProductions()
+      .find(p => p.orderId === id);
+
+    // Reset tombol agar selalu mulai dari default biru
+    prodBtn.disabled = false;
+    prodBtn.style.display = 'inline-block';
+    prodBtn.className = 'px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm';
+    prodBtn.replaceWith(prodBtn.cloneNode(true)); // Hilangkan listeners lama
+    const newBtn = document.getElementById('production-btn');
+
+    if (!existingProd) {
+      // Belum ada produksi → “Mulai Produksi”
+      newBtn.textContent = 'Mulai Produksi';
+      newBtn.addEventListener('click', () => {
+        newBtn.disabled = true;
+        ProductionService.initFromOrder(id);
+        // update status order jadi in_progress
+        const o = OrderService.getOrder(id);
+        o.status = 'in_progress';
+        OrderService.saveOrder(o);
+        statusEl.textContent = o.status;
+        AlertService.show('Produksi dimulai.', 'success');
+        location.hash = '#production-list';
+      });
+
+    } else if (existingProd.status !== 'done') {
+      // Ada produksi & belum selesai → sembunyikan tombol
+      newBtn.style.display = 'none';
+
+    } else {
+      // Produksi selesai → “Order Selesai”
+      newBtn.textContent = 'Order Selesai';
+      newBtn.className = 'px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm';
+      newBtn.addEventListener('click', () => {
+        // update status order jadi done
+        const o = OrderService.getOrder(id);
+        o.status = 'done';
+        OrderService.saveOrder(o);
+        statusEl.textContent = o.status;
+        AlertService.show('Order selesai.', 'success');
+      });
+    }
   }
 };

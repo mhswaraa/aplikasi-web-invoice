@@ -3,9 +3,77 @@
 import { StorageService } from './StorageService.js';
 
 export const ImportExportService = {
+  /**
+   * Import CSV dengan skip duplikat (atau update bila diinginkan)
+   *
+   * @param {string}   entity
+   * @param {File}     file
+   * @param {function} onComplete  → (result, err)
+   * @param {{ uniqueKey?: string, updateExisting?: boolean }} options
+   */
+  importCSV(entity, file, onComplete, options = {}) {
+    const { uniqueKey = 'id', updateExisting = false } = options;
+
+    if (typeof window.Papa === 'undefined') {
+      return onComplete(null, new Error('PapaParse belum ter‐load'));
+    }
+
+    window.Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        try {
+          // 1) Normalisasi data
+          const parsed = results.data.map(row => {
+            // parse JSON di kolom "items" bila ada
+            if (row.items) {
+              try { row.items = JSON.parse(row.items); }
+              catch { row.items = []; }
+            }
+            // konversi string angka
+            for (const key in row) {
+              const v = row[key];
+              if (v != null && v !== '' && !isNaN(v) && v.toString().trim() === v.toString()) {
+                row[key] = Number(v);
+              }
+            }
+            return row;
+          });
+
+          // 2) Dedup & update/create
+          const all = StorageService.getAll(entity);
+          let added = 0, updated = 0;
+
+          parsed.forEach(row => {
+            const match = all.find(item => item[uniqueKey] === row[uniqueKey]);
+            if (match) {
+              if (updateExisting) {
+                row.id = match.id;
+                StorageService.update(entity, row);
+                updated++;
+              }
+            } else {
+              StorageService.create(entity, row);
+              added++;
+            }
+          });
+
+          onComplete({ added, updated }, null);
+        } catch (err) {
+          onComplete(null, err);
+        }
+      },
+      error: err => onComplete(null, err)
+    });
+  },
+
+  /**
+   * Export all data entitas ke CSV dan auto-download
+   * @param {string} entity
+   */
   exportCSV(entity) {
     const data = StorageService.getAll(entity);
-    if (!data.length) {
+    if (!Array.isArray(data) || !data.length) {
       alert('Tidak ada data untuk diexport!');
       return;
     }
@@ -16,11 +84,11 @@ export const ImportExportService = {
     const rows = data.map(obj => {
       return keys.map(k => {
         let val = obj[k];
-        // Jika array atau object, stringify
-        if (val !== null && typeof val === 'object') {
+        if (val != null && typeof val === 'object') {
           val = JSON.stringify(val);
         }
-        return `"${String(val).replace(/"/g,'""')}"`;
+        const str = String(val ?? '');
+        return `"${str.replace(/"/g,'""')}"`;
       }).join(',');
     }).join('\n');
 
@@ -33,55 +101,8 @@ export const ImportExportService = {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  },
-
-  importCSV(entity, file, onComplete) {
-    if (typeof Papa === 'undefined') {
-      alert('PapaParse belum ter‐load!');
-      return onComplete(0, new Error('PapaParse tidak ditemukan'));
-    }
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: results => {
-        const parsed = results.data.map(row => {
-          // Parse kembali items JSON
-          if (row.items) {
-            try {
-              row.items = JSON.parse(row.items);
-            } catch {
-              row.items = [];
-            }
-          } else {
-            row.items = [];
-          }
-          // Pastikan tiap item valid
-          if (Array.isArray(row.items)) {
-            row.items = row.items.map(it => ({
-              name: it.name || '',
-              size: it.size || '',
-              qty: Number(it.qty) || 0,
-              price: Number(it.price) || 0
-            }));
-          } else {
-            row.items = [];
-          }
-          // Konversi angka top‐level
-          row.subtotal        = Number(row.subtotal)        || 0;
-          row.taxPercent      = Number(row.taxPercent)      || 0;
-          row.taxAmount       = Number(row.taxAmount)       || 0;
-          row.discountPercent = Number(row.discountPercent) || 0;
-          row.discountAmount  = Number(row.discountAmount)  || 0;
-          row.total           = Number(row.total)           || 0;
-          return row;
-        });
-
-        parsed.forEach(row => StorageService.create(entity, row));
-        onComplete(parsed.length);
-      },
-      error: err => onComplete(0, err)
-    });
   }
 };
 
+// expose globally jika perlu
 window.ImportExportService = ImportExportService;
